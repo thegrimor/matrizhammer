@@ -1,5 +1,5 @@
 import type { Player } from '@/types'
-import { factionName, factionShort } from '@/core/constants/factions'
+import { factionName } from '@/core/constants/factions'
 
 // The rosters are pre-filled with "Jugador 3" / "Rival 3": those are placeholders, not real names.
 const PLACEHOLDER = /^(jugador|rival)\s+\d+$/i
@@ -29,9 +29,4 @@ export function rivalLabel(p: Player, i: number): string {
   const name = realName(p)
   if (army) return name ? `${army} (${name})` : army
   return name || `Rival ${i + 1}`
-}
-
-/** A rival in a tight space (matrix header): the short army name, else the name. */
-export function rivalShort(p: Player, i: number): string {
-  return factionShort(p.factionId) || realName(p) || `Rival ${i + 1}`
 }

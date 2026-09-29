@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { emptyPlayer } from './factory'
-import { myLabel, myLabelWithArmy, rivalLabel, rivalShort } from './labels'
+import { myLabel, myLabelWithArmy, rivalLabel } from './labels'
 
 const rival = (name: string, factionId = '') => ({ ...emptyPlayer(name), factionId })
 
 describe('labels', () => {
   it('rivals lead with the army', () => {
     expect(rivalLabel(rival('Bruno', 'necrons'), 0)).toBe('Necrons (Bruno)')
-    expect(rivalShort(rival('Bruno', 'necrons'), 0)).toBe('Necrons')
-    expect(rivalShort(rival('Bruno', 'chaos-space-marines'), 0)).toBe('CSM')
   })
 
   it('placeholder names ("Rival 3") are not shown next to the army', () => {
@@ -19,7 +17,6 @@ describe('labels', () => {
   it('falls back to the name, then to the position, when there is no army', () => {
     expect(rivalLabel(rival('Bruno'), 0)).toBe('Bruno')
     expect(rivalLabel(rival(''), 4)).toBe('Rival 5')
-    expect(rivalShort(rival('Rival 2'), 1)).toBe('Rival 2')
   })
 
   it('my players keep name first', () => {

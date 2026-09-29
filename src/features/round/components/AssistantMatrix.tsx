@@ -2,7 +2,8 @@ import type { Player, Rating, Round } from '@/types'
 import type { Match, Progress, StepAnalysis } from '@/core/solver/roundFlow'
 import { RATING_CLASSES } from '@/core/constants/ratings'
 import { dispositionById } from '@/core/constants/dispositions'
-import { myLabel, rivalLabel, rivalShort } from '@/core/utils/labels'
+import { myLabel, rivalLabel } from '@/core/utils/labels'
+import { VerticalHeader } from './VerticalHeader'
 
 interface Props {
   round: Round
@@ -33,14 +34,14 @@ const BADGE: Record<Status, string> = {
   out: '–',
 }
 
-function Header({ p, i, rival, status, ring }: { p: Player; i: number; rival?: boolean; status: Status; ring: string }) {
+function Header({ p, i, status, ring }: { p: Player; i: number; status: Status; ring: string }) {
   const disp = dispositionById(p.dispositionId)
   const dim = status === 'played' || status === 'out'
   return (
     <span className={`flex items-center gap-1 min-w-0 px-0.5 ${dim ? 'opacity-40 line-through' : ''} ${ring}`}>
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
       <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
-      <span className="truncate">{rival ? rivalShort(p, i) : myLabel(p, i)}</span>
+      <span className="truncate">{myLabel(p, i)}</span>
       {BADGE[status] && (
         <span className={`shrink-0 text-[9px] no-underline ${status === 'defender' ? 'text-crimson-bright' : status === 'attacker' ? 'text-gold-bright' : 'text-parchment-dim'}`}>
           {BADGE[status]}
@@ -91,8 +92,14 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
             <tr>
               <th className="w-[4.5rem] sm:w-24" />
               {theirs.map((p, j) => (
-                <th key={j} title={rivalLabel(p, j)} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
-                  <Header p={p} i={j} rival status={theirStatus[j]} ring={predCols.has(j) ? 'outline outline-1 outline-gold-bright text-gold-bright' : ''} />
+                <th key={j} className="overflow-hidden font-normal text-parchment-dim align-bottom pb-0.5">
+                  <VerticalHeader
+                    player={p}
+                    index={j}
+                    heightClass="h-24"
+                    badge={BADGE[theirStatus[j]]}
+                    textClass={`${theirStatus[j] === 'played' || theirStatus[j] === 'out' ? 'opacity-40 line-through' : ''} ${predCols.has(j) ? 'text-gold-bright outline outline-1 outline-gold-bright' : ''}`}
+                  />
                 </th>
               ))}
             </tr>

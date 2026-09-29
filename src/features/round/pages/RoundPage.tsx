@@ -20,7 +20,8 @@ export function RoundPage() {
   const event = useAppSelector((s) => s.events.events.find((e) => e.id === eventId))
   const round = event?.rounds.find((r) => r.id === roundId)
   const [tab, setTab] = useState<Tab>('matrix')
-  const [showOpponents, setShowOpponents] = useState(false)
+  // null = follow the default (open while any rival has no army yet); a click overrides it.
+  const [opponentsOpen, setOpponentsOpen] = useState<boolean | null>(null)
 
   const numeric = useMemo(() => (round ? ratingSets(round) : null), [round])
   const state = useRoundAnalysis(numeric, event?.teamSize ?? 6, round?.steps ?? [])
@@ -42,6 +43,8 @@ export function RoundPage() {
     )
   }
   const ref = { eventId, roundId }
+  const missingArmies = round.opponents.filter((p) => !p.factionId).length
+  const showOpponents = opponentsOpen ?? missingArmies > 0
   const highlight = new Set(progress.matches.map((m) => `${m.mine}-${m.theirs}`))
   const TABS: [Tab, string][] = [['matrix', 'Matriz'], ['assistant', 'Asistente'], ['results', 'Resultado']]
 
@@ -59,10 +62,10 @@ export function RoundPage() {
       />
       <button
         type="button"
-        onClick={() => setShowOpponents((v) => !v)}
+        onClick={() => setOpponentsOpen(!showOpponents)}
         className="mt-4 font-display text-[10px] uppercase tracking-widest text-gold-bright hover:underline"
       >
-        {showOpponents ? '▾' : '▸'} Jugadores rivales
+        {showOpponents ? '▾' : '▸'} Jugadores rivales{missingArmies > 0 ? ` · faltan ${missingArmies} armies` : ''}
       </button>
       {showOpponents && (
         <div className="mt-2 space-y-1.5">

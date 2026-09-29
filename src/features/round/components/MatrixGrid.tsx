@@ -3,7 +3,8 @@ import type { Player, Rating } from '@/types'
 import { MAX_RATING, MIN_RATING, RATING_CLASSES } from '@/core/constants/ratings'
 import { dispositionById } from '@/core/constants/dispositions'
 import { LAYER_LABELS, type RatingLayer } from '@/core/utils/ratings'
-import { myLabel, rivalLabel, rivalShort } from '@/core/utils/labels'
+import { myLabel, rivalLabel } from '@/core/utils/labels'
+import { VerticalHeader } from './VerticalHeader'
 import { Button } from '@/shared/components/ui'
 
 interface Props {
@@ -20,13 +21,13 @@ interface Props {
   onSet: (layer: RatingLayer, row: number, col: number, value: number | null) => void
 }
 
-function Header({ p, i, rival }: { p: Player; i: number; rival?: boolean }) {
+function Header({ p, i }: { p: Player; i: number }) {
   const disp = dispositionById(p.dispositionId)
   return (
     <span className="flex items-center gap-1 min-w-0">
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
       <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
-      <span className="truncate">{rival ? rivalShort(p, i) : myLabel(p, i)}</span>
+      <span className="truncate">{myLabel(p, i)}</span>
     </span>
   )
 }
@@ -116,8 +117,8 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
             <tr>
               <th className="w-[4.5rem] sm:w-28 text-left text-[8px] sm:text-[9px] uppercase tracking-wider text-parchment-dim font-normal pr-1 align-bottom">Yo ↓ / Rival →</th>
               {theirs.map((p, j) => (
-                <th key={j} title={rivalLabel(p, j)} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
-                  <Header p={p} i={j} rival />
+                <th key={j} className="overflow-hidden font-normal text-parchment-dim align-bottom pb-0.5">
+                  <VerticalHeader player={p} index={j} heightClass="h-32" />
                 </th>
               ))}
             </tr>
