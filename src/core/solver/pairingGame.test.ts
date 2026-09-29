@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { modulesForTeamSize, fullMask, PairingSolver } from './pairingGame'
+import { modulesForTeamSize, fullMask, PairingSolver, uniformRatings, type RatingSet } from './pairingGame'
 
-function rootValue(matrix: number[][]): number {
-  const n = matrix.length
-  const s = new PairingSolver(matrix, modulesForTeamSize(n))
+function rootValue(ratings: number[][] | RatingSet): number {
+  const set = Array.isArray(ratings) ? uniformRatings(ratings) : ratings
+  const n = set.neutral.length
+  const s = new PairingSolver(set, modulesForTeamSize(n))
   return s.value(0, fullMask(n), fullMask(n))
+}
+
+const flat = (n: number, v: number) => Array.from({ length: n }, () => new Array<number>(n).fill(v))
+
+/** Opponent's own rating set under the zero-sum rule (their "they pick" is my "I pick", flipped). */
+function opponentSet(r: RatingSet): RatingSet {
+  const flip = (m: number[][]) => m.map((_, j) => m.map((row) => 8 - row[j]))
+  return { neutral: flip(r.neutral), mine: flip(r.theirs), theirs: flip(r.mine) }
 }
 
 function randomMatrix(n: number, seed: number): number[][] {
@@ -79,11 +88,53 @@ describe('PairingSolver', () => {
       [4, 4, 7],
     ]
     expect(rootValue(R)).toBeCloseTo(brute3(R), 2)
+    const A = [
+      [7, 2, 5],
+      [1, 6, 3],
+      [4, 4, 7],
+    ]
+    const B = [
+      [2, 6, 1],
+      [5, 3, 6],
+      [7, 1, 2],
+    ]
+    expect(rootValue({ neutral: R, mine: A, theirs: B })).toBeCloseTo(brute3(R, A, B), 2)
+  })
+
+  it('who picks the map decides which matrix each game reads', () => {
+    // neutral 4, "I pick" 7, "they pick" 1. Every game is one of: my defender vs their attacker
+    // (7), their defender vs my attacker (1), or a refused/champion game (4).
+    const set: RatingSet = { neutral: flat(3, 4), mine: flat(3, 7), theirs: flat(3, 1) }
+    expect(rootValue(set)).toBeCloseTo(7 + 1 + 4, 9) // ME: 2 defender games + 1 refused game
+    const six: RatingSet = { neutral: flat(6, 4), mine: flat(6, 7), theirs: flat(6, 1) }
+    // IS: 7+1 · ME: 7+1+4 · Champion: 4
+    expect(rootValue(six)).toBeCloseTo(8 + 12 + 4, 9)
+    const eight: RatingSet = { neutral: flat(8, 4), mine: flat(8, 7), theirs: flat(8, 1) }
+    // IS×2: 8+8 · ME: 12 · Champion: 4
+    expect(rootValue(eight)).toBeCloseTo(16 + 12 + 4, 9)
+  })
+
+  it('with equal matrices the result is the same as before per-map ratings existed', () => {
+    const m = randomMatrix(5, 11)
+    expect(rootValue({ neutral: m, mine: m.map((r) => [...r]), theirs: m.map((r) => [...r]) })).toBeCloseTo(rootValue(m), 9)
+  })
+
+  it('stays zero-sum consistent with three different matrices', () => {
+    for (const n of [3, 4, 5, 6]) {
+      const set: RatingSet = { neutral: randomMatrix(n, n + 1), mine: randomMatrix(n, n + 2), theirs: randomMatrix(n, n + 3) }
+      expect(rootValue(set) + rootValue(opponentSet(set))).toBeCloseTo(8 * n, 6)
+    }
+  })
+
+  it('choosing the map can change the optimum (a pure "I pick" bonus is worth taking)', () => {
+    const base: RatingSet = { neutral: flat(4, 4), mine: flat(4, 4), theirs: flat(4, 4) }
+    const withBonus: RatingSet = { ...base, mine: flat(4, 6) }
+    expect(rootValue(withBonus)).toBeGreaterThan(rootValue(base))
   })
 
   it('exposes the stage strategies used by the wizard', () => {
     const m = randomMatrix(6, 42)
-    const s = new PairingSolver(m, modulesForTeamSize(6))
+    const s = new PairingSolver(uniformRatings(m), modulesForTeamSize(6))
     const st = s.defenderStage(0, fullMask(6), fullMask(6))
     expect(st.game.value).toBeCloseTo(s.value(0, fullMask(6), fullMask(6)), 9)
     expect(st.game.row.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6)
@@ -102,7 +153,7 @@ describe('PairingSolver', () => {
  * refused pair plays each other. Solved with an exhaustive mixed-strategy grid search for the
  * 2x2 and 3x3 matrix games rather than the production solver.
  */
-function brute3(M: number[][]): number {
+function brute3(M: number[][], iPick: number[][] = M, theyPick: number[][] = M): number {
   const stage3 = (d: number, e: number) => {
     const mine = [0, 1, 2].filter((x) => x !== d)
     const theirs = [0, 1, 2].filter((x) => x !== e)
@@ -110,7 +161,7 @@ function brute3(M: number[][]): number {
       mine.map((a) => {
         const aRef = mine.find((x) => x !== a)!
         const bRef = theirs.find((x) => x !== b)!
-        return M[d][b] + M[a][e] + M[aRef][bRef]
+        return iPick[d][b] + theyPick[a][e] + M[aRef][bRef]
       }),
     )
     return gridValue(A)

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { popStep, pushStep, resetSteps, setOpponentName, setOpponentPlayer, setRating, setResult } from '@/store/eventsSlice'
 import { eventPath } from '@/core/constants/routes'
 import { replaySteps } from '@/core/solver/roundFlow'
+import { ratingSets } from '@/core/utils/ratings'
 import { PlayerRow } from '@/features/events/components/PlayerRow'
 import { MatrixGrid } from '../components/MatrixGrid'
 import { RoundAssistant } from '../components/RoundAssistant'
@@ -21,10 +22,7 @@ export function RoundPage() {
   const [tab, setTab] = useState<Tab>('matrix')
   const [showOpponents, setShowOpponents] = useState(false)
 
-  const numeric = useMemo(
-    () => (round && round.matrix.every((row) => row.every((v) => v !== null)) ? (round.matrix as number[][]) : null),
-    [round],
-  )
+  const numeric = useMemo(() => (round ? ratingSets(round) : null), [round])
   const state = useRoundAnalysis(numeric, event?.teamSize ?? 6, round?.steps ?? [])
   const progress = useMemo(() => {
     if (!round || !event) return null
@@ -54,8 +52,10 @@ export function RoundPage() {
         mine={event.myTeam}
         theirs={round.opponents}
         matrix={round.matrix}
+        mapMine={round.mapMine}
+        mapTheirs={round.mapTheirs}
         highlight={highlight}
-        onSet={(row, col, value) => dispatch(setRating({ ...ref, row, col, value }))}
+        onSet={(layer, row, col, value) => dispatch(setRating({ ...ref, layer, row, col, value }))}
       />
       <button
         type="button"
@@ -87,6 +87,7 @@ export function RoundPage() {
         round={round}
         mine={event.myTeam}
         filled={numeric !== null}
+        ratings={numeric}
         state={state}
         onPush={(step) => dispatch(pushStep({ ...ref, step }))}
         onUndo={() => dispatch(popStep(ref))}
@@ -101,6 +102,7 @@ export function RoundPage() {
         round={round}
         mine={event.myTeam}
         matches={progress.matches}
+        ratings={numeric}
         complete={progress.phase === 'done'}
         teamSize={event.teamSize}
         onSet={(key, patch) => dispatch(setResult({ ...ref, key, patch }))}

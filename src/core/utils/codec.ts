@@ -51,12 +51,17 @@ function sanitizeRound(x: unknown, n: number): Round | null {
   const opponents = Array.from({ length: n }, (_, i) =>
     sanitizePlayer(Array.isArray(o.opponents) ? o.opponents[i] : undefined),
   )
-  const matrix = Array.from({ length: n }, (_, i) =>
-    Array.from({ length: n }, (_, j) => {
-      const row = Array.isArray(o.matrix) ? o.matrix[i] : undefined
-      return sanitizeRating(Array.isArray(row) ? row[j] : undefined)
-    }),
-  )
+  const grid = (src: unknown) =>
+    Array.from({ length: n }, (_, i) =>
+      Array.from({ length: n }, (_, j) => {
+        const row = Array.isArray(src) ? src[i] : undefined
+        return sanitizeRating(Array.isArray(row) ? row[j] : undefined)
+      }),
+    )
+  // Events saved before per-map ratings existed have no mapMine/mapTheirs: they read as empty.
+  const matrix = grid(o.matrix)
+  const mapMine = grid(o.mapMine)
+  const mapTheirs = grid(o.mapTheirs)
   const steps: Step[] = []
   if (Array.isArray(o.steps)) {
     for (const s of o.steps) {
@@ -80,6 +85,8 @@ function sanitizeRound(x: unknown, n: number): Round | null {
     opponentName: str(o.opponentName, 80),
     opponents,
     matrix,
+    mapMine,
+    mapTheirs,
     steps,
     results,
   }

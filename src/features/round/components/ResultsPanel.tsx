@@ -1,5 +1,6 @@
 import type { Player, Round } from '@/types'
-import type { Match } from '@/core/solver/roundFlow'
+import { matchRating, type Match } from '@/core/solver/roundFlow'
+import type { RatingSet } from '@/core/solver/pairingGame'
 import { battlePoints, roundOutcome, teamPoints } from '@/core/utils/scoring'
 import { inputClass, SectionHeader } from '@/shared/components/ui'
 
@@ -7,6 +8,7 @@ interface Props {
   round: Round
   mine: Player[]
   matches: Match[]
+  ratings: RatingSet | null
   complete: boolean
   teamSize: number
   onSet: (key: string, patch: { myVp?: number | null; theirVp?: number | null }) => void
@@ -15,7 +17,7 @@ interface Props {
 const nm = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
 const KIND = { defender: 'Defensor', attacker: 'Atacante', refused: 'Rechazados', champion: 'Campeón' } as const
 
-export function ResultsPanel({ round, mine, matches, complete, teamSize, onSet }: Props) {
+export function ResultsPanel({ round, mine, matches, ratings, complete, teamSize, onSet }: Props) {
   if (!complete) {
     return <div className="border border-dashed border-rim-bright p-4 text-[12px] text-parchment-dim">Completa el pareo para anotar los resultados.</div>
   }
@@ -44,7 +46,7 @@ export function ResultsPanel({ round, mine, matches, complete, teamSize, onSet }
                 {nm(mine[m.mine], m.mine, 'Jugador')} <span className="text-parchment-dim">vs</span> {nm(round.opponents[m.theirs], m.theirs, 'Rival')}
               </div>
               <div className="text-[9px] uppercase tracking-widest text-parchment-dim">
-                {KIND[m.kind]} · puntuación {round.matrix[m.mine][m.theirs]}
+                {KIND[m.kind]} · puntuación {ratings ? matchRating(ratings, m) : '—'}
               </div>
             </div>
             <input

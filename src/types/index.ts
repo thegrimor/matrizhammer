@@ -51,8 +51,12 @@ export interface Round {
   number: number
   opponentName: string
   opponents: Player[]
-  /** matrix[i][j]: my player i vs their player j. */
+  /** matrix[i][j]: my player i vs their player j, nobody picking the map. Mandatory. */
   matrix: Rating[][]
+  /** Optional override when I pick the map (my defender's game). null = same as `matrix`. */
+  mapMine: Rating[][]
+  /** Optional override when they pick the map (their defender's game). null = same as `matrix`. */
+  mapTheirs: Rating[][]
   steps: Step[]
   /** Real results, keyed `${mineIndex}-${theirIndex}`. Optional. */
   results: Record<string, GameResult>

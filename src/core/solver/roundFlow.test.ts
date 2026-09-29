@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Step } from '@/types'
-import { analyzeRound, replaySteps } from './roundFlow'
+import { uniformRatings, type RatingSet } from './pairingGame'
+import { analyzeRound, matchRating, replaySteps } from './roundFlow'
 
 function randomMatrix(n: number, seed: number): number[][] {
   let s = seed
@@ -9,10 +10,10 @@ function randomMatrix(n: number, seed: number): number[][] {
 }
 
 /** Plays a whole round following the recommendations (rival = predicted), returning the steps. */
-function autoPlay(matrix: number[][], n: number): Step[] {
+function autoPlay(ratings: RatingSet, n: number): Step[] {
   const steps: Step[] = []
   for (let guard = 0; guard < 20; guard++) {
-    const a = analyzeRound(matrix, n, steps)
+    const a = analyzeRound(ratings, n, steps)
     const c = a.current
     if (!c) break
     if (c.phase === 'defenders')
@@ -28,7 +29,7 @@ function autoPlay(matrix: number[][], n: number): Step[] {
 describe('round flow', () => {
   it.each([3, 4, 5, 6, 7])('a full round of %i players pairs everyone exactly once', (n) => {
     const m = randomMatrix(n, n * 31)
-    const steps = autoPlay(m, n)
+    const steps = autoPlay(uniformRatings(m), n)
     const p = replaySteps(n, steps)
     expect(p.phase).toBe('done')
     expect(p.matches).toHaveLength(n)
@@ -38,17 +39,34 @@ describe('round flow', () => {
 
   it('the initial expected total equals the first stage value and stays consistent along the way', () => {
     const m = randomMatrix(6, 5)
-    const a0 = analyzeRound(m, 6, [])
+    const a0 = analyzeRound(uniformRatings(m), 6, [])
     expect(a0.current!.expectedTotal).toBeCloseTo(a0.initialExpected, 9)
     expect(a0.current!.phase).toBe('defenders')
   })
 
   it('a 6-player round is Initial Skirmish + Main Engagement + Champion (2 + 3 + 1 games)', () => {
     const m = randomMatrix(6, 9)
-    const p = replaySteps(6, autoPlay(m, 6))
+    const p = replaySteps(6, autoPlay(uniformRatings(m), 6))
     expect(p.matches.filter((x) => x.module === 0)).toHaveLength(2)
     expect(p.matches.filter((x) => x.module === 1)).toHaveLength(3)
     expect(p.matches.filter((x) => x.kind === 'champion')).toHaveLength(1)
+  })
+
+  it('reads each decided game from the matrix of whoever picks its map', () => {
+    const n = 6
+    const flat = (v: number) => Array.from({ length: n }, () => new Array<number>(n).fill(v))
+    const set: RatingSet = { neutral: flat(4), mine: flat(7), theirs: flat(1) }
+    const steps = autoPlay(set, n)
+    const p = replaySteps(n, steps)
+    for (const m of p.matches) {
+      const expected = m.kind === 'defender' ? 7 : m.kind === 'attacker' ? 1 : 4
+      expect(matchRating(set, m)).toBe(expected)
+    }
+    // once the round is over the fixed total is exactly what the games are worth: 8 + 12 + 4
+    const done = analyzeRound(set, n, steps)
+    expect(done.current).toBeNull()
+    expect(done.fixedTotal).toBe(24)
+    expect(analyzeRound(set, n, []).initialExpected).toBeCloseTo(24, 9)
   })
 
   it('rejects out-of-order logs', () => {

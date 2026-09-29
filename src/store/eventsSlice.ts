@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { GameResult, Player, Step, TeamEvent } from '@/types'
+import { LAYER_FIELD, type RatingLayer } from '@/core/utils/ratings'
 import { createEvent, createRound, newId } from '@/core/utils/factory'
 
 interface EventsState {
@@ -64,9 +65,14 @@ const eventsSlice = createSlice({
       const p = findRound(state, action.payload)?.opponents[action.payload.index]
       if (p) Object.assign(p, action.payload.patch)
     },
-    setRating(state, action: PayloadAction<RoundRef & { row: number; col: number; value: number | null }>) {
+    setRating(
+      state,
+      action: PayloadAction<RoundRef & { layer: RatingLayer; row: number; col: number; value: number | null }>,
+    ) {
       const r = findRound(state, action.payload)
-      if (r?.matrix[action.payload.row]) r.matrix[action.payload.row][action.payload.col] = action.payload.value
+      if (!r) return
+      const grid = r[LAYER_FIELD[action.payload.layer]]
+      if (grid[action.payload.row]) grid[action.payload.row][action.payload.col] = action.payload.value
     },
     pushStep(state, action: PayloadAction<RoundRef & { step: Step }>) {
       findRound(state, action.payload)?.steps.push(action.payload.step)

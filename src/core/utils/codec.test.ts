@@ -8,6 +8,8 @@ describe('event codec', () => {
     const r = createRound(ev)
     r.matrix[0][0] = 7
     r.matrix[5][5] = 1
+    r.mapMine[0][0] = 6
+    r.mapTheirs[2][3] = 2
     r.steps.push({ kind: 'defenders', mine: 0, theirs: 1, recMine: 0, recTheirs: 2 })
     r.results['0-1'] = { myVp: 80, theirVp: 50 }
     ev.rounds.push(r)
@@ -33,5 +35,18 @@ describe('event codec', () => {
     const clean = sanitizeEvent(dirty)!
     expect(clean.rounds[0].matrix[0]).toEqual([null, null, 5])
     expect(clean.rounds[0].steps).toHaveLength(1)
+  })
+
+  it('reads events saved before per-map ratings existed as having empty overrides', () => {
+    const ev = createEvent('viejo', 4)
+    ev.rounds.push(createRound(ev))
+    const old = JSON.parse(JSON.stringify(ev))
+    delete old.rounds[0].mapMine
+    delete old.rounds[0].mapTheirs
+    old.rounds[0].matrix[1][1] = 5
+    const clean = sanitizeEvent(old)!
+    expect(clean.rounds[0].matrix[1][1]).toBe(5)
+    expect(clean.rounds[0].mapMine.flat().every((v) => v === null)).toBe(true)
+    expect(clean.rounds[0].mapTheirs).toHaveLength(4)
   })
 })

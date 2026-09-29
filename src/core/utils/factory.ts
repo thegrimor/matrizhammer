@@ -31,6 +31,8 @@ export function createRound(event: TeamEvent, copyFrom?: Round): Round {
     opponentName: '',
     opponents: Array.from({ length: n }, (_, i) => emptyPlayer(`Rival ${i + 1}`)),
     matrix: copyFrom ? copyFrom.matrix.map((row) => [...row]) : emptyMatrix(n),
+    mapMine: copyFrom ? copyFrom.mapMine.map((row) => [...row]) : emptyMatrix(n),
+    mapTheirs: copyFrom ? copyFrom.mapTheirs.map((row) => [...row]) : emptyMatrix(n),
     steps: [],
     results: {},
   }

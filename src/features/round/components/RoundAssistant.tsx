@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Player, Round, Step } from '@/types'
-import type { StepAnalysis } from '@/core/solver/roundFlow'
+import { matchRating, type StepAnalysis } from '@/core/solver/roundFlow'
+import type { RatingSet } from '@/core/solver/pairingGame'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
 import { factionName } from '@/core/constants/factions'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
@@ -9,6 +10,7 @@ interface Props {
   round: Round
   mine: Player[]
   filled: boolean
+  ratings: RatingSet | null
   state: AnalysisState
   onPush: (step: Step) => void
   onUndo: () => void
@@ -27,7 +29,7 @@ const nmArmy = (p: Player, i: number, prefix: string) => {
 const same = (a: number | [number, number], b: number | [number, number]) =>
   Array.isArray(a) && Array.isArray(b) ? a[0] === b[0] && a[1] === b[1] : a === b
 
-export function RoundAssistant({ round, mine, filled, state, onPush, onUndo, onReset }: Props) {
+export function RoundAssistant({ round, mine, filled, ratings, state, onPush, onUndo, onReset }: Props) {
   const theirs = round.opponents
   const mineName = (i: number) => nm(mine[i], i, 'Jugador')
   const theirName = (j: number) => nm(theirs[j], j, 'Rival')
@@ -109,7 +111,7 @@ export function RoundAssistant({ round, mine, filled, state, onPush, onUndo, onR
                 <span className="truncate">
                   {mineName(m.mine)} <span className="text-parchment-dim">vs</span> {theirName(m.theirs)}
                 </span>
-                <span className="font-display text-gold-bright">{round.matrix[m.mine][m.theirs]}</span>
+                <span className="font-display text-gold-bright">{ratings ? matchRating(ratings, m) : ''}</span>
               </li>
             ))}
           </ul>
