@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-crimson: #c41e1e;
+  --color-crimson-bright: #ff2222;
+  --color-crimson-dim: #7a0f0f;
+  --color-gold: #c8962a;
+  --color-gold-bright: #f0b840;
+  --color-neon: #2aff6a;
+
+  --color-surface: #080808;
+  --color-surface-2: #0f0f0f;
+  --color-surface-3: #161616;
+  --color-surface-4: #1e1e1e;
+
+  --color-parchment: #e8dcc8;
+  --color-parchment-dim: #a89880;
+  --color-page: color-mix(in srgb, var(--color-surface) 92%, var(--color-parchment) 8%);
+
+  --color-rim: #2a2218;
+  --color-rim-bright: #4a3a28;
+
+  /* Force Disposition decks (fixed colours, same as cogitador-consulta) */
+  --color-deck-hold: #3fae55;
+  --color-deck-purge: #e0342f;
+  --color-deck-disruption: #2a4b9e;
+  --color-deck-recon: #4fb8e8;
+  --color-deck-priority: #e0b52a;
+
+  /* Rating ramp 1 (bad) → 7 (good) */
+  --color-r1: #e0342f;
+  --color-r2: #dd6a2a;
+  --color-r3: #d99a2a;
+  --color-r4: #a89880;
+  --color-r5: #9ab83f;
+  --color-r6: #4ea84e;
+  --color-r7: #2fd06a;
+
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    overflow-x: hidden;
+  }
+  body {
+    background: var(--color-page);
+    color: var(--color-parchment);
+    font-family: 'Share Tech Mono', monospace;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input, select, textarea {
+    font: inherit;
+  }
+}
