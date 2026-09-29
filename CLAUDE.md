@@ -91,6 +91,9 @@ from `lg`; each panel is rendered once and shown/hidden with CSS).
 ## Gotchas
 
 - `erasableSyntaxOnly` is on: no class parameter properties, no enums.
+- Both matrices (`MatrixGrid`, `AssistantMatrix`) must never scroll horizontally: `w-full table-fixed`, no
+  `min-w-*` on cells, names truncated with a fixed player-number prefix (the `title` attribute holds the
+  full name). Checked at 360 px with 8 players.
 - Tailwind only sees full literal class strings — colour lookups (`RATING_CLASSES`, `DISPOSITIONS`)
   are written out literally on purpose.
 - The UI shows the army next to the player name in the assistant (`Nombre (Army)`), in the

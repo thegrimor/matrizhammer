@@ -26,6 +26,7 @@ function Header({ p, i, prefix }: { p: Player; i: number; prefix: string }) {
   return (
     <span className="flex items-center gap-1 min-w-0">
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
+      <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
       <span className="truncate">{label(p, i, prefix)}</span>
     </span>
   )
@@ -108,15 +109,15 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
         ref={ref}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="overflow-x-auto focus:outline-none focus-visible:ring-1 focus-visible:ring-gold"
+        className="focus:outline-none focus-visible:ring-1 focus-visible:ring-gold"
         aria-label="Matriz de puntuaciones"
       >
-        <table className="border-separate border-spacing-1 text-[11px]">
+        <table className="w-full table-fixed border-separate border-spacing-0.5 sm:border-spacing-1 text-[11px]">
           <thead>
             <tr>
-              <th className="text-left text-[9px] uppercase tracking-widest text-parchment-dim font-normal pr-1">Yo ↓ / Rival →</th>
+              <th className="w-[4.5rem] sm:w-28 text-left text-[8px] sm:text-[9px] uppercase tracking-wider text-parchment-dim font-normal pr-1 align-bottom">Yo ↓ / Rival →</th>
               {theirs.map((p, j) => (
-                <th key={j} className="font-normal text-parchment-dim max-w-[4.5rem] min-w-[3.25rem] text-left align-bottom pb-0.5">
+                <th key={j} title={label(p, j, 'Rival')} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
                   <Header p={p} i={j} prefix="Rival" />
                 </th>
               ))}
@@ -125,7 +126,7 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
           <tbody>
             {mine.map((p, i) => (
               <tr key={i}>
-                <th className="font-normal text-left text-parchment max-w-[6.5rem] pr-1">
+                <th title={label(p, i, 'Jugador')} className="overflow-hidden font-normal text-left text-parchment pr-1">
                   <Header p={p} i={i} prefix="Jugador" />
                 </th>
                 {theirs.map((_, j) => {
@@ -143,7 +144,7 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
                   return (
                     <td key={j}>
                       <div
-                        className={`relative h-12 min-w-[3.25rem] border transition-colors ${
+                        className={`relative h-12 border transition-colors ${
                           v === null ? 'border-dashed border-rim-bright bg-surface-3' : RATING_CLASSES[v]
                         } ${selected ? 'ring-2 ring-gold-bright' : ''} ${hit ? 'outline outline-2 outline-crimson-bright -outline-offset-2' : ''}`}
                       >

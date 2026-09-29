@@ -39,6 +39,7 @@ function Header({ p, i, prefix, status, ring }: { p: Player; i: number; prefix: 
   return (
     <span className={`flex items-center gap-1 min-w-0 px-0.5 ${dim ? 'opacity-40 line-through' : ''} ${ring}`}>
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
+      <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
       <span className="truncate">{label(p, i, prefix)}</span>
       {BADGE[status] && (
         <span className={`shrink-0 text-[9px] no-underline ${status === 'defender' ? 'text-crimson-bright' : status === 'attacker' ? 'text-gold-bright' : 'text-parchment-dim'}`}>
@@ -84,13 +85,13 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="border-separate border-spacing-0.5 text-[10px]">
+      <div>
+        <table className="w-full table-fixed border-separate border-spacing-0.5 text-[10px]">
           <thead>
             <tr>
-              <th />
+              <th className="w-[4.5rem] sm:w-24" />
               {theirs.map((p, j) => (
-                <th key={j} className="font-normal text-parchment-dim max-w-[4.5rem] min-w-[2.5rem] text-left align-bottom pb-0.5">
+                <th key={j} title={label(p, j, 'Rival')} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
                   <Header p={p} i={j} prefix="Rival" status={theirStatus[j]} ring={predCols.has(j) ? 'outline outline-1 outline-gold-bright text-gold-bright' : ''} />
                 </th>
               ))}
@@ -99,7 +100,7 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
           <tbody>
             {mine.map((p, i) => (
               <tr key={i}>
-                <th className="font-normal text-left text-parchment max-w-[6rem] pr-1">
+                <th title={label(p, i, 'Jugador')} className="overflow-hidden font-normal text-left text-parchment pr-1">
                   <Header p={p} i={i} prefix="Jugador" status={myStatus[i]} ring={recRows.has(i) ? 'outline outline-1 outline-neon text-neon' : ''} />
                 </th>
                 {theirs.map((_, j) => {
@@ -112,7 +113,7 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
                   return (
                     <td key={j}>
                       <div
-                        className={`relative h-8 min-w-[2.5rem] border text-center leading-8 font-display text-xs ${
+                        className={`relative h-8 border text-center leading-8 font-display text-xs ${
                           v === null ? 'border-dashed border-rim-bright bg-surface-3' : RATING_CLASSES[v]
                         } ${live || game ? '' : 'opacity-25 saturate-0'} ${
                           game ? 'outline outline-2 outline-crimson-bright -outline-offset-2' : ''
