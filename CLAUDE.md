@@ -71,6 +71,10 @@ Layers mirror `cogitador-consulta`: `src/core` (pure logic, no React), `src/feat
 - `core/solver/roundFlow.ts` — `replaySteps` rebuilds a round's state from its recorded `Step`s
   (never stored: derived, like points in `cogitador-consulta`); `analyzeRound` returns the
   recommendation/prediction for the current phase plus expected totals.
+- `features/round/components/AssistantMatrix.tsx` — read-only copy of the matrix inside the assistant:
+  players who can no longer be picked (already matched, or not among the current attackers) are
+  greyed out, decided games outlined, recommended (green) / predicted (amber) choice highlighted. It is
+  a tool for humans: they follow (and can second-guess) the calculation.
 - `infrastructure/solver/solver.worker.ts` + `features/round/hooks/useRoundAnalysis.ts` — the solve
   runs in a Web Worker; the worker caches the solver per matrix so later steps are instant.
 - `core/utils/scoring.ts` — BP table, win margins per team size, TP (used by the results panel).

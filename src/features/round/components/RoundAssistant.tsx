@@ -3,6 +3,7 @@ import type { Player, Round, Step } from '@/types'
 import { matchRating, type StepAnalysis } from '@/core/solver/roundFlow'
 import type { RatingSet } from '@/core/solver/pairingGame'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
+import { AssistantMatrix } from './AssistantMatrix'
 import { factionName } from '@/core/constants/factions'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
@@ -64,6 +65,10 @@ export function RoundAssistant({ round, mine, filled, ratings, state, onPush, on
           <div className="font-display text-lg text-gold-bright">{perGame.toFixed(2)}</div>
           <div className="text-[9px] text-parchment-dim">al inicio: {(analysis.initialExpected / n).toFixed(2)}</div>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <AssistantMatrix round={round} mine={mine} progress={progress} current={current} />
       </div>
 
       {current ? (
