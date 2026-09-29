@@ -34,7 +34,7 @@ Deployment is up to the owner; Netlify works out of the box (`netlify.toml` pins
 
 - The matrix is **N×N, rows = my players, columns = their players, cell = my 1–7**. N (team size)
   is 3–8, default 6, fixed when an event is created. The rival is strictly zero-sum: their value is
-  `8 − x`; there is no separate rival matrix and no per-cell override.
+  `8 − x`; there is no separate rival matrix and no manual override of the rival's value.
 - Cells of the **main matrix** must all be filled before anything is calculated (no neutral default).
 - **Each cell can hold three values in the same square** (`Round.matrix` / `mapMine` / `mapTheirs`),
   because whoever picks the map changes the rating: **main = nobody picks the map** (mandatory),
