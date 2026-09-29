@@ -143,8 +143,6 @@ function StepPanel({ current, mineName, theirName, mineOption, theirOption, modu
   const theirLabel =
     current.phase === 'defenders' ? 'Defensor rival' : current.phase === 'attackers' ? 'Atacantes rivales' : 'Tu atacante al que se enfrenta su defensor'
   // Option labels: in the refusal step `mineOptions` are THEIR players and vice versa.
-  const mineNameFor = current.phase === 'refusals' ? theirName : mineName
-  const theirNameFor = current.phase === 'refusals' ? mineName : theirName
   const mineOptionFor = current.phase === 'refusals' ? theirOption : mineOption
   const theirOptionFor = current.phase === 'refusals' ? mineOption : theirOption
 
@@ -203,11 +201,11 @@ function StepPanel({ current, mineName, theirName, mineOption, theirOption, modu
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <div className="text-[9px] uppercase tracking-widest text-parchment-dim">Recomendado · {mineLabel}</div>
-          <div className="border border-neon/50 bg-neon/5 text-neon px-2 py-1.5 text-[13px] mt-1">{fmt(current.recMine, mineNameFor)}</div>
+          <div className="border border-neon/50 bg-neon/5 text-neon px-2 py-1.5 text-[13px] mt-1">{fmt(current.recMine, mineOptionFor)}</div>
         </div>
         <div>
           <div className="text-[9px] uppercase tracking-widest text-parchment-dim">Previsto · {theirLabel}</div>
-          <div className="border border-gold/50 bg-gold/5 text-gold-bright px-2 py-1.5 text-[13px] mt-1">{fmt(current.recTheirs, theirNameFor)}</div>
+          <div className="border border-gold/50 bg-gold/5 text-gold-bright px-2 py-1.5 text-[13px] mt-1">{fmt(current.recTheirs, theirOptionFor)}</div>
         </div>
       </div>
 
