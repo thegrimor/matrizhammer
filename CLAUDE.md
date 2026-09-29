@@ -27,7 +27,8 @@ npm run test     # Vitest (core logic only)
 ```
 
 No backend, no accounts: everything lives in `localStorage` (`matrizhammer-events`, versioned).
-Deployment is up to the owner.
+Deployment is up to the owner; Netlify works out of the box (`netlify.toml` pins Node 22, and
+`public/_redirects` is the SPA fallback — without it every route except `/` 404s on refresh/deep link).
 
 ## Decisions already made (do not re-litigate)
 

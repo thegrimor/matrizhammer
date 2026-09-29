@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback for client-side routing (React Router) is public/_redirects, which Vite
+# copies into dist/ as-is — not repeated here to avoid two redirect sources drifting apart.
