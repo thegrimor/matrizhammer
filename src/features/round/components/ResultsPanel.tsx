@@ -2,6 +2,7 @@ import type { Player, Round } from '@/types'
 import { matchRating, type Match } from '@/core/solver/roundFlow'
 import type { RatingSet } from '@/core/solver/pairingGame'
 import { battlePoints, roundOutcome, teamPoints } from '@/core/utils/scoring'
+import { myLabel, rivalLabel } from '@/core/utils/labels'
 import { inputClass, SectionHeader } from '@/shared/components/ui'
 
 interface Props {
@@ -14,7 +15,6 @@ interface Props {
   onSet: (key: string, patch: { myVp?: number | null; theirVp?: number | null }) => void
 }
 
-const nm = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
 const KIND = { defender: 'Defensor', attacker: 'Atacante', refused: 'Rechazados', champion: 'Campeón' } as const
 
 export function ResultsPanel({ round, mine, matches, ratings, complete, teamSize, onSet }: Props) {
@@ -43,7 +43,7 @@ export function ResultsPanel({ round, mine, matches, ratings, complete, teamSize
           <div key={key} className="grid grid-cols-[1fr_4.5rem_4.5rem_3rem] items-center gap-2 border border-rim bg-surface-2 p-2 text-[12px]">
             <div className="min-w-0">
               <div className="truncate">
-                {nm(mine[m.mine], m.mine, 'Jugador')} <span className="text-parchment-dim">vs</span> {nm(round.opponents[m.theirs], m.theirs, 'Rival')}
+                {myLabel(mine[m.mine], m.mine)} <span className="text-parchment-dim">vs</span> {rivalLabel(round.opponents[m.theirs], m.theirs)}
               </div>
               <div className="text-[9px] uppercase tracking-widest text-parchment-dim">
                 {KIND[m.kind]} · puntuación {ratings ? matchRating(ratings, m) : '—'}

@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { addRound, removeEvent, removeRound, renameEvent, setMyPlayer } from '@/store/eventsSlice'
 import { roundPath } from '@/core/constants/routes'
-import { encodeEvent } from '@/core/utils/codec'
 import { PlayerRow } from '../components/PlayerRow'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
@@ -12,7 +10,6 @@ export function EventPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const event = useAppSelector((s) => s.events.events.find((e) => e.id === eventId))
-  const [copied, setCopied] = useState(false)
 
   if (!event) {
     return (
@@ -21,25 +18,6 @@ export function EventPage() {
         <Link to="/" className="text-gold-bright underline">Volver</Link>
       </div>
     )
-  }
-
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(encodeEvent(event))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      window.prompt('Copia este código:', encodeEvent(event))
-    }
-  }
-
-  const downloadJson = () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(event, null, 2)], { type: 'application/json' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${event.name.replace(/[^\w-]+/g, '_') || 'evento'}.json`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   const last = event.rounds[event.rounds.length - 1]
@@ -122,22 +100,17 @@ export function EventPage() {
       </section>
 
       <section>
-        <SectionHeader>Exportar</SectionHeader>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={copyCode}>{copied ? 'Copiado ✓' : 'Copiar código'}</Button>
-          <Button onClick={downloadJson}>Descargar JSON</Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (window.confirm(`¿Borrar «${event.name}»? No se puede deshacer.`)) {
-                dispatch(removeEvent(event.id))
-                navigate('/')
-              }
-            }}
-          >
-            Borrar evento
-          </Button>
-        </div>
+        <Button
+          variant="danger"
+          onClick={() => {
+            if (window.confirm(`¿Borrar «${event.name}»? No se puede deshacer.`)) {
+              dispatch(removeEvent(event.id))
+              navigate('/')
+            }
+          }}
+        >
+          Borrar evento
+        </Button>
       </section>
     </div>
   )

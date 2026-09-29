@@ -8,34 +8,43 @@ interface Props {
   player: Player
   placeholder: string
   onChange: (patch: Partial<Player>) => void
+  /** Rivals: the army says more than the name, so it goes first. */
+  armyFirst?: boolean
 }
 
-export function PlayerRow({ index, player, placeholder, onChange }: Props) {
+export function PlayerRow({ index, player, placeholder, onChange, armyFirst }: Props) {
   const disp = dispositionById(player.dispositionId)
+  const nameField = (
+    <input
+      key="name"
+      className={inputClass}
+      value={player.name}
+      placeholder={placeholder}
+      maxLength={60}
+      aria-label={`Nombre del jugador ${index + 1}`}
+      onChange={(e) => onChange({ name: e.target.value })}
+    />
+  )
+  const armyField = (
+    <select
+      key="army"
+      className={inputClass}
+      value={player.factionId}
+      aria-label={`Facción del jugador ${index + 1}`}
+      onChange={(e) => onChange({ factionId: e.target.value })}
+    >
+      <option value="">Facción…</option>
+      {FACTIONS.map((f) => (
+        <option key={f.id} value={f.id}>
+          {f.name}
+        </option>
+      ))}
+    </select>
+  )
   return (
     <div className="grid grid-cols-1 sm:grid-cols-[1.75rem_1.4fr_1.2fr_1.2fr_1.4fr] gap-1.5 items-center border border-rim bg-surface-2 p-2">
       <span className={`font-display text-xs ${disp ? disp.text : 'text-parchment-dim'}`}>{index + 1}</span>
-      <input
-        className={inputClass}
-        value={player.name}
-        placeholder={placeholder}
-        maxLength={60}
-        aria-label={`Nombre del jugador ${index + 1}`}
-        onChange={(e) => onChange({ name: e.target.value })}
-      />
-      <select
-        className={inputClass}
-        value={player.factionId}
-        aria-label={`Facción del jugador ${index + 1}`}
-        onChange={(e) => onChange({ factionId: e.target.value })}
-      >
-        <option value="">Facción…</option>
-        {FACTIONS.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
+      {armyFirst ? [armyField, nameField] : [nameField, armyField]}
       <select
         className={inputClass}
         value={player.dispositionId}

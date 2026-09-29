@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { createEvent, createRound } from './factory'
-import { decodeEvent, encodeEvent, sanitizeEvent } from './codec'
+import { sanitizeEvent } from './codec'
 
-describe('event codec', () => {
-  it('round-trips an event through the compressed code and through raw JSON', () => {
+describe('sanitizeEvent', () => {
+  it('keeps a well-formed event unchanged (through a JSON round trip, as localStorage does)', () => {
     const ev = createEvent('Torneo', 6)
     const r = createRound(ev)
     r.matrix[0][0] = 7
@@ -13,14 +13,13 @@ describe('event codec', () => {
     r.steps.push({ kind: 'defenders', mine: 0, theirs: 1, recMine: 0, recTheirs: 2 })
     r.results['0-1'] = { myVp: 80, theirVp: 50 }
     ev.rounds.push(r)
-    expect(decodeEvent(encodeEvent(ev))).toEqual(ev)
-    expect(decodeEvent(JSON.stringify(ev))).toEqual(ev)
+    expect(sanitizeEvent(JSON.parse(JSON.stringify(ev)))).toEqual(ev)
   })
 
   it('rejects garbage and out-of-range data', () => {
-    expect(decodeEvent('MH1:nonsense')).toBeNull()
-    expect(decodeEvent('{"teamSize":12}')).toBeNull()
+    expect(sanitizeEvent({ teamSize: 12 })).toBeNull()
     expect(sanitizeEvent(null)).toBeNull()
+    expect(sanitizeEvent('nonsense')).toBeNull()
   })
 
   it('drops invalid ratings and truncates a broken step log', () => {

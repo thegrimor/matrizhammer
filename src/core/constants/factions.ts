@@ -39,3 +39,4 @@ export const FACTIONS: FactionInfo[] = [
 export function factionName(id: string): string {
   return FACTIONS.find((f) => f.id === id)?.name ?? ''
 }
+

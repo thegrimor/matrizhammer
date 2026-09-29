@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { GameResult, Player, Step, TeamEvent } from '@/types'
 import { LAYER_FIELD, type RatingLayer } from '@/core/utils/ratings'
-import { createEvent, createRound, newId } from '@/core/utils/factory'
+import { createEvent, createRound } from '@/core/utils/factory'
 
 interface EventsState {
   events: TeamEvent[]
@@ -31,10 +31,6 @@ const eventsSlice = createSlice({
       prepare(name: string, teamSize: number) {
         return { payload: createEvent(name, teamSize) }
       },
-    },
-    importEvent(state, action: PayloadAction<TeamEvent>) {
-      // Always a fresh id so importing never overwrites an existing event.
-      state.events.unshift({ ...action.payload, id: newId() })
     },
     removeEvent(state, action: PayloadAction<string>) {
       state.events = state.events.filter((e) => e.id !== action.payload)
@@ -96,7 +92,6 @@ const eventsSlice = createSlice({
 export const {
   hydrateEvents,
   addEvent,
-  importEvent,
   removeEvent,
   renameEvent,
   setMyPlayer,

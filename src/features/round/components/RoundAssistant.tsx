@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import type { Player, Round, Step } from '@/types'
-import { matchRating, type StepAnalysis } from '@/core/solver/roundFlow'
+import { matchRating, type Sacrifice, type StepAnalysis } from '@/core/solver/roundFlow'
 import type { RatingSet } from '@/core/solver/pairingGame'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
-import { factionName } from '@/core/constants/factions'
+import { AssistantMatrix } from './AssistantMatrix'
+import { myLabel, myLabelWithArmy, rivalLabel } from '@/core/utils/labels'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
 interface Props {
@@ -20,21 +21,15 @@ interface Props {
 const MODULE_NAMES = { IS: 'Initial Skirmish', ME: 'Main Engagement', CH: 'Champion System' } as const
 const PHASE_NAMES = { defenders: 'Defensores', attackers: 'Atacantes', refusals: 'Rechazos' } as const
 
-const nm = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
-/** "Nombre (Army)" for the dropdowns; the army is left out when it has not been set. */
-const nmArmy = (p: Player, i: number, prefix: string) => {
-  const army = factionName(p.factionId)
-  return army ? `${nm(p, i, prefix)} (${army})` : nm(p, i, prefix)
-}
 const same = (a: number | [number, number], b: number | [number, number]) =>
   Array.isArray(a) && Array.isArray(b) ? a[0] === b[0] && a[1] === b[1] : a === b
 
 export function RoundAssistant({ round, mine, filled, ratings, state, onPush, onUndo, onReset }: Props) {
   const theirs = round.opponents
-  const mineName = (i: number) => nm(mine[i], i, 'Jugador')
-  const theirName = (j: number) => nm(theirs[j], j, 'Rival')
-  const mineOption = (i: number) => nmArmy(mine[i], i, 'Jugador')
-  const theirOption = (j: number) => nmArmy(theirs[j], j, 'Rival')
+  const mineName = (i: number) => myLabel(mine[i], i)
+  const theirName = (j: number) => rivalLabel(theirs[j], j)
+  const mineOption = (i: number) => myLabelWithArmy(mine[i], i)
+  const theirOption = (j: number) => rivalLabel(theirs[j], j)
   const n = mine.length
 
   if (!filled) {
@@ -64,6 +59,10 @@ export function RoundAssistant({ round, mine, filled, ratings, state, onPush, on
           <div className="font-display text-lg text-gold-bright">{perGame.toFixed(2)}</div>
           <div className="text-[9px] text-parchment-dim">al inicio: {(analysis.initialExpected / n).toFixed(2)}</div>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <AssistantMatrix round={round} mine={mine} progress={progress} current={current} />
       </div>
 
       {current ? (
@@ -117,6 +116,35 @@ export function RoundAssistant({ round, mine, filled, ratings, state, onPush, on
           </ul>
         )}
       </div>
+    </div>
+  )
+}
+
+/** "Limpiar la matriz": explains why the recommended pick looks bad on its own but is worth it. */
+function SacrificeNote({
+  current,
+  sacrifice,
+  label,
+}: {
+  current: StepAnalysis
+  sacrifice: Sacrifice
+  label: (v: number | [number, number]) => string
+}) {
+  const rec = label(current.recMine)
+  const alt = label(sacrifice.alt)
+  const a = sacrifice.recProspect.toFixed(1)
+  const b = sacrifice.altProspect.toFixed(1)
+  const gain = `+${sacrifice.gain.toFixed(1)}`
+  const text =
+    current.phase === 'defenders'
+      ? `${rec} pinta peor por sí solo (media ${a}) que ${alt} (${b}), pero elegirlo sube el total esperado ${gain} respecto a poner a ${alt}: se sacrifica para librar al resto de un cruce malísimo.`
+      : current.phase === 'attackers'
+        ? `Esta pareja expone como peor cruce un ${a} contra su defensor (con ${alt} solo expondrías un ${b}), pero sube el total esperado ${gain}: se sacrifica para librar al resto de un cruce malísimo.`
+        : `Tu defensor jugaría un ${a} contra ${rec} (contra ${alt} sería un ${b}), pero sube el total esperado ${gain}: se sacrifica para librar al resto de un cruce malísimo.`
+  return (
+    <div role="note" className="mt-3 border border-gold/60 bg-gold/10 px-2 py-1.5 text-[12px] text-parchment">
+      <span className="font-display text-[10px] uppercase tracking-widest text-gold-bright">Limpieza · </span>
+      {text}
     </div>
   )
 }
@@ -210,6 +238,8 @@ function StepPanel({ current, mineName, theirName, mineOption, theirOption, modu
           <div className="border border-gold/50 bg-gold/5 text-gold-bright px-2 py-1.5 text-[13px] mt-1">{fmt(current.recTheirs, theirOptionFor)}</div>
         </div>
       </div>
+
+      {current.sacrifice && <SacrificeNote current={current} sacrifice={current.sacrifice} label={(v) => fmt(v, mineOptionFor)} />}
 
       <div className="grid gap-3 sm:grid-cols-2 mt-4">
         <label className="block text-[9px] uppercase tracking-widest text-parchment-dim">

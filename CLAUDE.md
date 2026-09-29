@@ -70,27 +70,49 @@ Layers mirror `cogitador-consulta`: `src/core` (pure logic, no React), `src/feat
   5: IS+ME; 6: IS+ME+CH; 7: IS+IS+ME; 8: IS+IS+ME+CH). 8 players solve in ~1 s.
 - `core/solver/roundFlow.ts` — `replaySteps` rebuilds a round's state from its recorded `Step`s
   (never stored: derived, like points in `cogitador-consulta`); `analyzeRound` returns the
-  recommendation/prediction for the current phase plus expected totals.
+  recommendation/prediction for the current phase plus expected totals, and a `sacrifice` when the
+  recommendation is a **"limpieza"** (cleaning the matrix: sacrificing the player who does worst to
+  spare the rest a terrible pairing). The solver already produces such plays on its own; `detectSacrifice`
+  only *explains* them: the recommended option looks ≥ `MIN_SACRIFICE_DROP` (1.5) worse on its own than the
+  best-looking one yet is worth ≥ `MIN_SACRIFICE_GAIN` (0.5) more expected total against the rival's
+  equilibrium mix. "Looks worse on its own" = a defender's mean rating vs the rival's pool, a pair's worst
+  match-up against their known defender, or my defender's rating against the chosen attacker. The
+  assistant shows it as a "Limpieza" note under the recommendation. Stage objects expose `payoffs` for this.
+- `features/round/components/AssistantMatrix.tsx` — read-only copy of the matrix inside the assistant:
+  players who can no longer be picked (already matched, or not among the current attackers) are
+  greyed out, decided games outlined, recommended (green) / predicted (amber) choice highlighted. It is
+  a tool for humans: they follow (and can second-guess) the calculation.
 - `infrastructure/solver/solver.worker.ts` + `features/round/hooks/useRoundAnalysis.ts` — the solve
   runs in a Web Worker; the worker caches the solver per matrix so later steps are instant.
 - `core/utils/scoring.ts` — BP table, win margins per team size, TP (used by the results panel).
-- `core/utils/codec.ts` — `sanitizeEvent` (validates ALL untrusted data: localStorage, imports) and
-  the export code `MH1:` + lz-string. Any new field on `TeamEvent` must be handled in `sanitizeEvent`.
+- `core/utils/codec.ts` — `sanitizeEvent` validates everything read back from localStorage. Any new
+  field on `TeamEvent` must be handled there. There is deliberately **no import/export** in the UI
+  (removed as noise: the matrix is used on the spot). The planned way to bring data in is an **Excel
+  import of the matrices of the tournament's main teams** (one round per rival team, rows = my players);
+  the owner will supply the template — do not design that format before receiving it.
 - `store/eventsSlice.ts` — the only slice; `store/index.ts` persists the events array on change.
 - Model: `TeamEvent` → `myTeam: Player[]` + `rounds: Round[]`; a `Round` holds the opponent's
   players, the matrix, the `steps` log and optional per-game VP `results` (`types/index.ts`).
 
-Routes (`core/constants/routes.ts`): `/` events list · `/event/:eventId` team, rounds, export ·
+Routes (`core/constants/routes.ts`): `/` events list · `/event/:eventId` team and rounds ·
 `/event/:eventId/round/:roundId` matrix + round assistant + results (tabs below `lg`, two columns
 from `lg`; each panel is rendered once and shown/hidden with CSS).
 
 ## Gotchas
 
 - `erasableSyntaxOnly` is on: no class parameter properties, no enums.
+- Both matrices (`MatrixGrid`, `AssistantMatrix`) must never scroll horizontally: `w-full table-fixed`, no
+  `min-w-*` on cells, names truncated with a fixed player-number prefix (the `title` attribute holds the
+  full name). Checked at 360 px with 8 players.
 - Tailwind only sees full literal class strings — colour lookups (`RATING_CLASSES`, `DISPOSITIONS`)
   are written out literally on purpose.
-- The UI shows the army next to the player name in the assistant (`Nombre (Army)`), in the
-  dropdowns and in the recommended/predicted boxes.
+- Labels live in `core/utils/labels.ts`. **My players: name first** (`Nombre (Army)` in the assistant's
+  dropdowns and boxes). **Rivals: army first** (`Necrons (Bruno)`), because the army tells you far more
+  about a rival than a name. Rival **column headers are written vertically** (`VerticalHeader`, rotated
+  text above each narrow column) so the full army name fits and nothing scrolls sideways; my players'
+  row headers are horizontal. Pre-filled names (`Rival 3`, `Jugador 3`) count as placeholders and are
+  hidden next to an army. The rivals editor puts the army field before the name and is open by default
+  while any rival has no army (until armies are set the headers can only show `Rival N`).
 - Solver tests include a zero-sum consistency check (my value + the opponent-view value = 8n, also with
   three different matrices), a per-layer check (7/1/4 flat sets → known totals), an
   independent brute force for n=3, and optimality certificates for random games. Keep them green
