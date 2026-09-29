@@ -1,9 +1,6 @@
-import LZString from 'lz-string'
 import type { GameResult, Player, Rating, Round, Step, TeamEvent } from '@/types'
 import { MAX_TEAM_SIZE, MIN_TEAM_SIZE } from '@/core/solver/pairingGame'
 import { newId } from './factory'
-
-const PREFIX = 'MH1:'
 
 function str(x: unknown, max = 200): string {
   return typeof x === 'string' ? x.slice(0, max) : ''
@@ -92,7 +89,7 @@ function sanitizeRound(x: unknown, n: number): Round | null {
   }
 }
 
-/** Validates untrusted data (localStorage, imports) into a well-formed event, or null. */
+/** Validates untrusted data (whatever localStorage holds) into a well-formed event, or null. */
 export function sanitizeEvent(x: unknown): TeamEvent | null {
   if (!x || typeof x !== 'object') return null
   const o = x as Record<string, unknown>
@@ -109,21 +106,5 @@ export function sanitizeEvent(x: unknown): TeamEvent | null {
     myTeam,
     rounds,
     createdAt: typeof o.createdAt === 'number' ? o.createdAt : Date.now(),
-  }
-}
-
-export function encodeEvent(event: TeamEvent): string {
-  return PREFIX + LZString.compressToEncodedURIComponent(JSON.stringify(event))
-}
-
-/** Accepts either a `MH1:` code or raw JSON. */
-export function decodeEvent(text: string): TeamEvent | null {
-  const t = text.trim()
-  try {
-    const json = t.startsWith(PREFIX) ? LZString.decompressFromEncodedURIComponent(t.slice(PREFIX.length)) : t
-    if (!json) return null
-    return sanitizeEvent(JSON.parse(json))
-  } catch {
-    return null
   }
 }

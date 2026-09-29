@@ -85,13 +85,16 @@ Layers mirror `cogitador-consulta`: `src/core` (pure logic, no React), `src/feat
 - `infrastructure/solver/solver.worker.ts` + `features/round/hooks/useRoundAnalysis.ts` — the solve
   runs in a Web Worker; the worker caches the solver per matrix so later steps are instant.
 - `core/utils/scoring.ts` — BP table, win margins per team size, TP (used by the results panel).
-- `core/utils/codec.ts` — `sanitizeEvent` (validates ALL untrusted data: localStorage, imports) and
-  the export code `MH1:` + lz-string. Any new field on `TeamEvent` must be handled in `sanitizeEvent`.
+- `core/utils/codec.ts` — `sanitizeEvent` validates everything read back from localStorage. Any new
+  field on `TeamEvent` must be handled there. There is deliberately **no import/export** in the UI
+  (removed as noise: the matrix is used on the spot). The planned way to bring data in is an **Excel
+  import of the matrices of the tournament's main teams** (one round per rival team, rows = my players);
+  the owner will supply the template — do not design that format before receiving it.
 - `store/eventsSlice.ts` — the only slice; `store/index.ts` persists the events array on change.
 - Model: `TeamEvent` → `myTeam: Player[]` + `rounds: Round[]`; a `Round` holds the opponent's
   players, the matrix, the `steps` log and optional per-game VP `results` (`types/index.ts`).
 
-Routes (`core/constants/routes.ts`): `/` events list · `/event/:eventId` team, rounds, export ·
+Routes (`core/constants/routes.ts`): `/` events list · `/event/:eventId` team and rounds ·
 `/event/:eventId/round/:roundId` matrix + round assistant + results (tabs below `lg`, two columns
 from `lg`; each panel is rendered once and shown/hidden with CSS).
 

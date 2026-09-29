@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { addEvent, importEvent, removeEvent } from '@/store/eventsSlice'
+import { addEvent, removeEvent } from '@/store/eventsSlice'
 import { eventPath } from '@/core/constants/routes'
 import { DEFAULT_TEAM_SIZE, MAX_TEAM_SIZE, MIN_TEAM_SIZE } from '@/core/solver/pairingGame'
-import { decodeEvent } from '@/core/utils/codec'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
 export function HomePage() {
@@ -13,23 +12,10 @@ export function HomePage() {
   const events = useAppSelector((s) => s.events.events)
   const [name, setName] = useState('')
   const [size, setSize] = useState(DEFAULT_TEAM_SIZE)
-  const [code, setCode] = useState('')
-  const [importError, setImportError] = useState('')
 
   const create = () => {
     const action = dispatch(addEvent(name, size))
     navigate(eventPath(action.payload.id))
-  }
-
-  const doImport = (text: string) => {
-    const ev = decodeEvent(text)
-    if (!ev) {
-      setImportError('No se pudo leer el código o el JSON.')
-      return
-    }
-    dispatch(importEvent(ev))
-    setCode('')
-    setImportError('')
   }
 
   return (
@@ -54,7 +40,7 @@ export function HomePage() {
       <section>
         <SectionHeader>Eventos ({events.length})</SectionHeader>
         {events.length === 0 ? (
-          <p className="text-[12px] text-parchment-dim">Todavía no hay eventos. Crea uno arriba o importa un código.</p>
+          <p className="text-[12px] text-parchment-dim">Todavía no hay eventos. Crea uno arriba.</p>
         ) : (
           <ul className="space-y-1.5">
             {events.map((e) => (
@@ -77,36 +63,6 @@ export function HomePage() {
             ))}
           </ul>
         )}
-      </section>
-
-      <section>
-        <SectionHeader>Importar</SectionHeader>
-        <textarea
-          className={`${inputClass} h-20`}
-          placeholder="Pega aquí un código MH1:… o el JSON de un evento"
-          aria-label="Código o JSON a importar"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Button onClick={() => doImport(code)} disabled={!code.trim()}>
-            Importar código
-          </Button>
-          <label className="font-display text-[10px] uppercase tracking-widest px-3 py-2 border border-rim-bright text-parchment hover:border-gold cursor-pointer">
-            Archivo JSON
-            <input
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={async (e) => {
-                const f = e.target.files?.[0]
-                if (f) doImport(await f.text())
-                e.target.value = ''
-              }}
-            />
-          </label>
-          {importError && <span className="text-[11px] text-crimson-bright">{importError}</span>}
-        </div>
       </section>
     </div>
   )
