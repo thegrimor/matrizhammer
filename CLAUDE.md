@@ -70,7 +70,14 @@ Layers mirror `cogitador-consulta`: `src/core` (pure logic, no React), `src/feat
   5: IS+ME; 6: IS+ME+CH; 7: IS+IS+ME; 8: IS+IS+ME+CH). 8 players solve in ~1 s.
 - `core/solver/roundFlow.ts` — `replaySteps` rebuilds a round's state from its recorded `Step`s
   (never stored: derived, like points in `cogitador-consulta`); `analyzeRound` returns the
-  recommendation/prediction for the current phase plus expected totals.
+  recommendation/prediction for the current phase plus expected totals, and a `sacrifice` when the
+  recommendation is a **"limpieza"** (cleaning the matrix: sacrificing the player who does worst to
+  spare the rest a terrible pairing). The solver already produces such plays on its own; `detectSacrifice`
+  only *explains* them: the recommended option looks ≥ `MIN_SACRIFICE_DROP` (1.5) worse on its own than the
+  best-looking one yet is worth ≥ `MIN_SACRIFICE_GAIN` (0.5) more expected total against the rival's
+  equilibrium mix. "Looks worse on its own" = a defender's mean rating vs the rival's pool, a pair's worst
+  match-up against their known defender, or my defender's rating against the chosen attacker. The
+  assistant shows it as a "Limpieza" note under the recommendation. Stage objects expose `payoffs` for this.
 - `features/round/components/AssistantMatrix.tsx` — read-only copy of the matrix inside the assistant:
   players who can no longer be picked (already matched, or not among the current attackers) are
   greyed out, decided games outlined, recommended (green) / predicted (amber) choice highlighted. It is

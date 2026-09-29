@@ -66,11 +66,14 @@ export interface DefenderStage {
   mineOptions: number[]
   theirOptions: number[]
   game: GameSolution
+  /** payoffs[i][j]: expected total from here on if I pick mineOptions[i] and they pick theirOptions[j]. */
+  payoffs: number[][]
 }
 export interface AttackerStage {
   mineOptions: [number, number][]
   theirOptions: [number, number][]
   game: GameSolution
+  payoffs: number[][]
 }
 /** Which opposing attacker each defender chooses to play. */
 export interface RefusalStage {
@@ -79,6 +82,7 @@ export interface RefusalStage {
   /** Their defender's possible opponents (my two attackers). */
   theirOptions: number[]
   game: GameSolution
+  payoffs: number[][]
 }
 
 /**
@@ -124,14 +128,14 @@ export class PairingSolver {
     const A = mineOptions.map((d) =>
       theirOptions.map((e) => this.attackerStage(k, P, Q, d, e).game.value),
     )
-    return { mineOptions, theirOptions, game: solveGame(A) }
+    return { mineOptions, theirOptions, game: solveGame(A), payoffs: A }
   }
 
   attackerStage(k: number, P: number, Q: number, d: number, e: number): AttackerStage {
     const mineOptions = pairsOf(bits(P & ~(1 << d)))
     const theirOptions = pairsOf(bits(Q & ~(1 << e)))
     const A = mineOptions.map((mp) => theirOptions.map((tp) => this.refusalValue(k, P, Q, d, e, mp, tp)))
-    return { mineOptions, theirOptions, game: solveGame(A) }
+    return { mineOptions, theirOptions, game: solveGame(A), payoffs: A }
   }
 
   /** Payoff of one cell of the refusal game: I face `b` (of their pair), they face `a` (of mine). */
@@ -187,7 +191,7 @@ export class PairingSolver {
     tp: [number, number],
   ): RefusalStage {
     const A = tp.map((b) => mp.map((a) => this.cell(k, P, Q, d, e, mp, tp, b, a)))
-    return { mineOptions: [...tp], theirOptions: [...mp], game: solveGame(A) }
+    return { mineOptions: [...tp], theirOptions: [...mp], game: solveGame(A), payoffs: A }
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Step } from '@/types'
+import { argmax } from './matrixGame'
 import { bits, fullMask, modulesForTeamSize, PairingSolver, recommend, type ModuleKind, type RatingSet } from './pairingGame'
 
 export type Phase = 'defenders' | 'attackers' | 'refusals' | 'done'
@@ -97,6 +98,45 @@ export function matchRating(ratings: RatingSet, m: Match): number {
   return ratings.neutral[m.mine][m.theirs]
 }
 
+/**
+ * "Limpiar la matriz": the recommended pick looks worse on its own than another option (a weaker
+ * player, a pair that exposes a worse match-up, a worse game for my defender) yet raises the expected
+ * total of the round — i.e. someone is sacrificed to spare the rest a terrible pairing.
+ */
+export interface Sacrifice {
+  /** The option that looks best on its own and that the recommendation passes over. */
+  alt: number | [number, number]
+  /** How the recommended / alternative option look on their own (see the prospects in `analyzeRound`). */
+  recProspect: number
+  altProspect: number
+  /** Expected-total advantage of the recommendation over the alternative (>= MIN_SACRIFICE_GAIN). */
+  gain: number
+}
+
+/** The recommendation must look at least this much worse on its own... */
+export const MIN_SACRIFICE_DROP = 1.5
+/** ...and still be worth at least this many rating points more than the option that looks best. */
+export const MIN_SACRIFICE_GAIN = 0.5
+
+export function detectSacrifice(
+  options: (number | [number, number])[],
+  payoffs: number[][],
+  game: { row: number[]; col: number[] },
+  prospects: number[],
+): Sacrifice | null {
+  const rec = argmax(game.row)
+  const alt = argmax(prospects)
+  if (rec === alt) return null
+  if (prospects[alt] - prospects[rec] < MIN_SACRIFICE_DROP) return null
+  // Expected total of an option against the rival's equilibrium mix.
+  const value = (i: number) => payoffs[i].reduce((sum, v, j) => sum + v * game.col[j], 0)
+  const gain = value(rec) - value(alt)
+  if (gain < MIN_SACRIFICE_GAIN) return null
+  return { alt: options[alt], recProspect: prospects[rec], altProspect: prospects[alt], gain }
+}
+
+const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
+
 export interface StepAnalysis {
   phase: Exclude<Phase, 'done'>
   moduleKind: ModuleKind
@@ -107,6 +147,8 @@ export interface StepAnalysis {
   recTheirs: number | [number, number]
   /** Expected total of the whole round (games already fixed + expected value of the rest). */
   expectedTotal: number
+  /** Set when the recommendation is a sacrifice that cleans a terrible pairing (see `Sacrifice`). */
+  sacrifice: Sacrifice | null
 }
 
 export interface RoundAnalysis {
@@ -147,6 +189,13 @@ export function analyzeRound(
       recMine: r.mine,
       recTheirs: r.theirs,
       expectedTotal: fixedTotal + st.game.value,
+      // A defender's prospect: how they do on average against the rival's pool, on their own map.
+      sacrifice: detectSacrifice(
+        st.mineOptions,
+        st.payoffs,
+        st.game,
+        st.mineOptions.map((i) => mean(st.theirOptions.map((j) => ratings.mine[i][j]))),
+      ),
     }
   } else if (progress.phase === 'attackers') {
     const st = solver.attackerStage(k, P, Q, progress.defenderMine!, progress.defenderTheirs!)
@@ -159,6 +208,13 @@ export function analyzeRound(
       recMine: r.mine,
       recTheirs: r.theirs,
       expectedTotal: fixedTotal + st.game.value,
+      // A pair's prospect: the worst match-up it exposes against their (known) defender.
+      sacrifice: detectSacrifice(
+        st.mineOptions,
+        st.payoffs,
+        st.game,
+        st.mineOptions.map((pair) => Math.min(...pair.map((a) => ratings.theirs[a][progress.defenderTheirs!]))),
+      ),
     }
   } else {
     const st = solver.refusalStage(
@@ -179,6 +235,13 @@ export function analyzeRound(
       recMine: r.mine,
       recTheirs: r.theirs,
       expectedTotal: fixedTotal + st.game.value,
+      // Which attacker my defender plays: the rating of that game, on my map.
+      sacrifice: detectSacrifice(
+        st.mineOptions,
+        st.payoffs,
+        st.game,
+        st.mineOptions.map((b) => ratings.mine[progress.defenderMine!][b]),
+      ),
     }
   }
   return { progress, initialExpected, fixedTotal, current }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Player, Round, Step } from '@/types'
-import { matchRating, type StepAnalysis } from '@/core/solver/roundFlow'
+import { matchRating, type Sacrifice, type StepAnalysis } from '@/core/solver/roundFlow'
 import type { RatingSet } from '@/core/solver/pairingGame'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
 import { AssistantMatrix } from './AssistantMatrix'
@@ -120,6 +120,35 @@ export function RoundAssistant({ round, mine, filled, ratings, state, onPush, on
   )
 }
 
+/** "Limpiar la matriz": explains why the recommended pick looks bad on its own but is worth it. */
+function SacrificeNote({
+  current,
+  sacrifice,
+  label,
+}: {
+  current: StepAnalysis
+  sacrifice: Sacrifice
+  label: (v: number | [number, number]) => string
+}) {
+  const rec = label(current.recMine)
+  const alt = label(sacrifice.alt)
+  const a = sacrifice.recProspect.toFixed(1)
+  const b = sacrifice.altProspect.toFixed(1)
+  const gain = `+${sacrifice.gain.toFixed(1)}`
+  const text =
+    current.phase === 'defenders'
+      ? `${rec} pinta peor por sí solo (media ${a}) que ${alt} (${b}), pero elegirlo sube el total esperado ${gain} respecto a poner a ${alt}: se sacrifica para librar al resto de un cruce malísimo.`
+      : current.phase === 'attackers'
+        ? `Esta pareja expone como peor cruce un ${a} contra su defensor (con ${alt} solo expondrías un ${b}), pero sube el total esperado ${gain}: se sacrifica para librar al resto de un cruce malísimo.`
+        : `Tu defensor jugaría un ${a} contra ${rec} (contra ${alt} sería un ${b}), pero sube el total esperado ${gain}: se sacrifica para librar al resto de un cruce malísimo.`
+  return (
+    <div role="note" className="mt-3 border border-gold/60 bg-gold/10 px-2 py-1.5 text-[12px] text-parchment">
+      <span className="font-display text-[10px] uppercase tracking-widest text-gold-bright">Limpieza · </span>
+      {text}
+    </div>
+  )
+}
+
 interface PanelProps {
   current: StepAnalysis
   mineName: (i: number) => string
@@ -209,6 +238,8 @@ function StepPanel({ current, mineName, theirName, mineOption, theirOption, modu
           <div className="border border-gold/50 bg-gold/5 text-gold-bright px-2 py-1.5 text-[13px] mt-1">{fmt(current.recTheirs, theirOptionFor)}</div>
         </div>
       </div>
+
+      {current.sacrifice && <SacrificeNote current={current} sacrifice={current.sacrifice} label={(v) => fmt(v, mineOptionFor)} />}
 
       <div className="grid gap-3 sm:grid-cols-2 mt-4">
         <label className="block text-[9px] uppercase tracking-widest text-parchment-dim">
