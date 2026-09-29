@@ -1,5 +1,5 @@
 import type { Step } from '@/types'
-import { bits, fullMask, modulesForTeamSize, PairingSolver, recommend, type ModuleKind } from './pairingGame'
+import { bits, fullMask, modulesForTeamSize, PairingSolver, recommend, type ModuleKind, type RatingSet } from './pairingGame'
 
 export type Phase = 'defenders' | 'attackers' | 'refusals' | 'done'
 export type MatchKind = 'defender' | 'attacker' | 'refused' | 'champion'
@@ -90,6 +90,13 @@ export function replaySteps(teamSize: number, steps: Step[]): Progress {
   return p
 }
 
+/** Rating of one decided game, using the matrix of whoever picks its map. */
+export function matchRating(ratings: RatingSet, m: Match): number {
+  if (m.kind === 'defender') return ratings.mine[m.mine][m.theirs]
+  if (m.kind === 'attacker') return ratings.theirs[m.mine][m.theirs]
+  return ratings.neutral[m.mine][m.theirs]
+}
+
 export interface StepAnalysis {
   phase: Exclude<Phase, 'done'>
   moduleKind: ModuleKind
@@ -113,15 +120,15 @@ export interface RoundAnalysis {
 
 /** Solvers are expensive to warm up (memo), so callers can pass one to reuse across steps. */
 export function analyzeRound(
-  matrix: number[][],
+  ratings: RatingSet,
   teamSize: number,
   steps: Step[],
-  solver: PairingSolver = new PairingSolver(matrix, modulesForTeamSize(teamSize)),
+  solver: PairingSolver = new PairingSolver(ratings, modulesForTeamSize(teamSize)),
 ): RoundAnalysis {
   const progress = replaySteps(teamSize, steps)
   const full = fullMask(teamSize)
   const initialExpected = solver.value(0, full, full)
-  const fixedTotal = progress.matches.reduce((s, m) => s + matrix[m.mine][m.theirs], 0)
+  const fixedTotal = progress.matches.reduce((s, m) => s + matchRating(ratings, m), 0)
   if (progress.phase === 'done') return { progress, initialExpected, fixedTotal, current: null }
 
   const k = progress.moduleIndex

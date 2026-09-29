@@ -27,6 +27,25 @@ export function modulesForTeamSize(size: number): ModuleKind[] {
   }
 }
 
+/**
+ * The three ratings a cross-match can have, depending on who picks the map (Teams Event
+ * Companion: the Defender declares the layout of their own game; the refused-attackers game
+ * and the Champion game use a layout fixed by the round). All are from MY side, 1–7, n×n.
+ */
+export interface RatingSet {
+  /** Nobody picks the map (refused attackers, Champion). The only mandatory matrix. */
+  neutral: number[][]
+  /** I pick the map: my defender's game against their attacker. */
+  mine: number[][]
+  /** They pick the map: their defender's game against my attacker. */
+  theirs: number[][]
+}
+
+/** A rating set where the map never matters. */
+export function uniformRatings(m: number[][]): RatingSet {
+  return { neutral: m, mine: m, theirs: m }
+}
+
 export function bits(mask: number): number[] {
   const out: number[] = []
   for (let i = 0; mask >> i; i++) if (mask & (1 << i)) out.push(i)
@@ -64,8 +83,8 @@ export interface RefusalStage {
 
 /**
  * Exact solver for the whole multi-module pairing game (zero-sum, payoff = sum of the 1–7
- * ratings of every game played, from my side). `matrix[i][j]` = my rating of my player `i`
- * against their player `j`. Backward induction, memoised on (module, my pool, their pool).
+ * ratings of every game played, from my side). `ratings.*[i][j]` = my rating of my player `i`
+ * against their player `j`, with the layout chosen by whoever the game's role says (see `RatingSet`). Backward induction, memoised on (module, my pool, their pool).
  *
  * Module resolution: defenders chosen simultaneously → attacker pairs chosen simultaneously
  * (knowing the defenders) → each team picks which opposing attacker its defender plays,
@@ -75,11 +94,11 @@ export interface RefusalStage {
 export class PairingSolver {
   private memo = new Map<number, number>()
 
-  readonly matrix: number[][]
+  readonly ratings: RatingSet
   readonly modules: ModuleKind[]
 
-  constructor(matrix: number[][], modules: ModuleKind[]) {
-    this.matrix = matrix
+  constructor(ratings: RatingSet, modules: ModuleKind[]) {
+    this.ratings = ratings
     this.modules = modules
   }
 
@@ -90,7 +109,7 @@ export class PairingSolver {
   /** Expected total of every game played from module `k` onward. */
   value(k: number, P: number, Q: number): number {
     if (k >= this.modules.length) return 0
-    if (this.modules[k] === 'CH') return this.matrix[bits(P)[0]][bits(Q)[0]]
+    if (this.modules[k] === 'CH') return this.ratings.neutral[bits(P)[0]][bits(Q)[0]]
     const key = this.key(k, P, Q)
     const hit = this.memo.get(key)
     if (hit !== undefined) return hit
@@ -127,14 +146,15 @@ export class PairingSolver {
     b: number,
     a: number,
   ): number {
-    const M = this.matrix
-    let v = M[d][b] + M[a][e]
+    const { neutral, mine, theirs } = this.ratings
+    // My defender picks the layout of their game (mine); their defender picks theirs.
+    let v = mine[d][b] + theirs[a][e]
     if (this.modules[k] === 'IS') {
       v += this.value(k + 1, P & ~((1 << d) | (1 << a)), Q & ~((1 << e) | (1 << b)))
     } else {
       const aRefused = mp[0] === a ? mp[1] : mp[0]
       const bRefused = tp[0] === b ? tp[1] : tp[0]
-      v += M[aRefused][bRefused]
+      v += neutral[aRefused][bRefused]
       v += this.value(k + 1, P & ~((1 << d) | (1 << mp[0]) | (1 << mp[1])), Q & ~((1 << e) | (1 << tp[0]) | (1 << tp[1])))
     }
     return v
