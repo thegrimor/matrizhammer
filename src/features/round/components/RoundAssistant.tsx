@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Player, Round, Step } from '@/types'
 import type { StepAnalysis } from '@/core/solver/roundFlow'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
+import { factionName } from '@/core/constants/factions'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
 interface Props {
@@ -18,6 +19,11 @@ const MODULE_NAMES = { IS: 'Initial Skirmish', ME: 'Main Engagement', CH: 'Champ
 const PHASE_NAMES = { defenders: 'Defensores', attackers: 'Atacantes', refusals: 'Rechazos' } as const
 
 const nm = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
+/** "Nombre (Army)" for the dropdowns; the army is left out when it has not been set. */
+const nmArmy = (p: Player, i: number, prefix: string) => {
+  const army = factionName(p.factionId)
+  return army ? `${nm(p, i, prefix)} (${army})` : nm(p, i, prefix)
+}
 const same = (a: number | [number, number], b: number | [number, number]) =>
   Array.isArray(a) && Array.isArray(b) ? a[0] === b[0] && a[1] === b[1] : a === b
 
@@ -25,6 +31,8 @@ export function RoundAssistant({ round, mine, filled, state, onPush, onUndo, onR
   const theirs = round.opponents
   const mineName = (i: number) => nm(mine[i], i, 'Jugador')
   const theirName = (j: number) => nm(theirs[j], j, 'Rival')
+  const mineOption = (i: number) => nmArmy(mine[i], i, 'Jugador')
+  const theirOption = (j: number) => nmArmy(theirs[j], j, 'Rival')
   const n = mine.length
 
   if (!filled) {
@@ -62,6 +70,8 @@ export function RoundAssistant({ round, mine, filled, state, onPush, onUndo, onR
           current={current}
           mineName={mineName}
           theirName={theirName}
+          mineOption={mineOption}
+          theirOption={theirOption}
           moduleNumber={progress.moduleIndex + 1}
           moduleCount={progress.modules.length}
           state={progress}
@@ -113,13 +123,16 @@ interface PanelProps {
   current: StepAnalysis
   mineName: (i: number) => string
   theirName: (i: number) => string
+  /** Same as the names above but with the army, used inside the dropdowns. */
+  mineOption: (i: number) => string
+  theirOption: (i: number) => string
   moduleNumber: number
   moduleCount: number
   state: import('@/core/solver/roundFlow').Progress
   onConfirm: (step: Step) => void
 }
 
-function StepPanel({ current, mineName, theirName, moduleNumber, moduleCount, state, onConfirm }: PanelProps) {
+function StepPanel({ current, mineName, theirName, mineOption, theirOption, moduleNumber, moduleCount, state, onConfirm }: PanelProps) {
   const fmt = (v: number | [number, number], name: (i: number) => string) =>
     Array.isArray(v) ? `${name(v[0])} + ${name(v[1])}` : name(v)
   const [myPick, setMyPick] = useState(current.recMine)
@@ -132,6 +145,8 @@ function StepPanel({ current, mineName, theirName, moduleNumber, moduleCount, st
   // Option labels: in the refusal step `mineOptions` are THEIR players and vice versa.
   const mineNameFor = current.phase === 'refusals' ? theirName : mineName
   const theirNameFor = current.phase === 'refusals' ? mineName : theirName
+  const mineOptionFor = current.phase === 'refusals' ? theirOption : mineOption
+  const theirOptionFor = current.phase === 'refusals' ? mineOption : theirOption
 
   const confirm = () => {
     if (current.phase === 'defenders')
@@ -200,13 +215,13 @@ function StepPanel({ current, mineName, theirName, moduleNumber, moduleCount, st
         <label className="block text-[9px] uppercase tracking-widest text-parchment-dim">
           Lo que eliges tú
           <div className="mt-1 normal-case tracking-normal text-[13px]">
-            {select(current.mineOptions, myPick, setMyPick, mineNameFor, 'Tu elección')}
+            {select(current.mineOptions, myPick, setMyPick, mineOptionFor, 'Tu elección')}
           </div>
         </label>
         <label className="block text-[9px] uppercase tracking-widest text-parchment-dim">
           Lo que revela el rival
           <div className="mt-1 normal-case tracking-normal text-[13px]">
-            {select(current.theirOptions, theirPick, setTheirPick, theirNameFor, 'Elección del rival')}
+            {select(current.theirOptions, theirPick, setTheirPick, theirOptionFor, 'Elección del rival')}
           </div>
         </label>
       </div>
