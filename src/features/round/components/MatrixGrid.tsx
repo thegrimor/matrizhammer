@@ -3,6 +3,7 @@ import type { Player, Rating } from '@/types'
 import { MAX_RATING, MIN_RATING, RATING_CLASSES } from '@/core/constants/ratings'
 import { dispositionById } from '@/core/constants/dispositions'
 import { LAYER_LABELS, type RatingLayer } from '@/core/utils/ratings'
+import { myLabel, rivalLabel, rivalShort } from '@/core/utils/labels'
 import { Button } from '@/shared/components/ui'
 
 interface Props {
@@ -19,15 +20,13 @@ interface Props {
   onSet: (layer: RatingLayer, row: number, col: number, value: number | null) => void
 }
 
-const label = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
-
-function Header({ p, i, prefix }: { p: Player; i: number; prefix: string }) {
+function Header({ p, i, rival }: { p: Player; i: number; rival?: boolean }) {
   const disp = dispositionById(p.dispositionId)
   return (
     <span className="flex items-center gap-1 min-w-0">
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
       <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
-      <span className="truncate">{label(p, i, prefix)}</span>
+      <span className="truncate">{rival ? rivalShort(p, i) : myLabel(p, i)}</span>
     </span>
   )
 }
@@ -117,8 +116,8 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
             <tr>
               <th className="w-[4.5rem] sm:w-28 text-left text-[8px] sm:text-[9px] uppercase tracking-wider text-parchment-dim font-normal pr-1 align-bottom">Yo ↓ / Rival →</th>
               {theirs.map((p, j) => (
-                <th key={j} title={label(p, j, 'Rival')} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
-                  <Header p={p} i={j} prefix="Rival" />
+                <th key={j} title={rivalLabel(p, j)} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
+                  <Header p={p} i={j} rival />
                 </th>
               ))}
             </tr>
@@ -126,8 +125,8 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
           <tbody>
             {mine.map((p, i) => (
               <tr key={i}>
-                <th title={label(p, i, 'Jugador')} className="overflow-hidden font-normal text-left text-parchment pr-1">
-                  <Header p={p} i={i} prefix="Jugador" />
+                <th title={myLabel(p, i)} className="overflow-hidden font-normal text-left text-parchment pr-1">
+                  <Header p={p} i={i} />
                 </th>
                 {theirs.map((_, j) => {
                   const v = matrix[i][j]
@@ -135,7 +134,7 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
                   const r = mapTheirs[i][j]
                   const selected = sel[0] === i && sel[1] === j
                   const hit = highlight?.has(`${i}-${j}`)
-                  const cellLabel = `${label(p, i, 'Jugador')} contra ${label(theirs[j], j, 'Rival')}: principal ${v ?? 'sin puntuar'}${y !== null ? `, si elijo yo el mapa ${y}` : ''}${r !== null ? `, si elige el rival ${r}` : ''}`
+                  const cellLabel = `${myLabel(p, i)} contra ${rivalLabel(theirs[j], j)}: principal ${v ?? 'sin puntuar'}${y !== null ? `, si elijo yo el mapa ${y}` : ''}${r !== null ? `, si elige el rival ${r}` : ''}`
                   const pick = (l: RatingLayer) => {
                     setSel([i, j])
                     setLayer(l)
@@ -163,7 +162,7 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
                           type="button"
                           tabIndex={-1}
                           onClick={() => pick('mine')}
-                          aria-label={`${label(p, i, 'Jugador')} contra ${label(theirs[j], j, 'Rival')}: si elijo yo el mapa ${y ?? 'igual que el principal'}`}
+                          aria-label={`${myLabel(p, i)} contra ${rivalLabel(theirs[j], j)}: si elijo yo el mapa ${y ?? 'igual que el principal'}`}
                           className={`absolute bottom-0 left-0 w-1/2 h-4 text-[9px] leading-4 text-left pl-1 ${
                             y !== null ? `${RATING_CLASSES[y]} border-t border-r` : 'text-parchment-dim/40 hover:text-parchment'
                           } ${selected && layer === 'mine' ? 'ring-1 ring-gold-bright' : ''}`}
@@ -174,7 +173,7 @@ export function MatrixGrid({ mine, theirs, matrix, mapMine, mapTheirs, highlight
                           type="button"
                           tabIndex={-1}
                           onClick={() => pick('theirs')}
-                          aria-label={`${label(p, i, 'Jugador')} contra ${label(theirs[j], j, 'Rival')}: si elige el rival el mapa ${r ?? 'igual que el principal'}`}
+                          aria-label={`${myLabel(p, i)} contra ${rivalLabel(theirs[j], j)}: si elige el rival el mapa ${r ?? 'igual que el principal'}`}
                           className={`absolute bottom-0 right-0 w-1/2 h-4 text-[9px] leading-4 text-right pr-1 ${
                             r !== null ? `${RATING_CLASSES[r]} border-t border-l` : 'text-parchment-dim/40 hover:text-parchment'
                           } ${selected && layer === 'theirs' ? 'ring-1 ring-gold-bright' : ''}`}

@@ -4,7 +4,7 @@ import { matchRating, type StepAnalysis } from '@/core/solver/roundFlow'
 import type { RatingSet } from '@/core/solver/pairingGame'
 import type { AnalysisState } from '../hooks/useRoundAnalysis'
 import { AssistantMatrix } from './AssistantMatrix'
-import { factionName } from '@/core/constants/factions'
+import { myLabel, myLabelWithArmy, rivalLabel } from '@/core/utils/labels'
 import { Button, inputClass, SectionHeader } from '@/shared/components/ui'
 
 interface Props {
@@ -21,21 +21,15 @@ interface Props {
 const MODULE_NAMES = { IS: 'Initial Skirmish', ME: 'Main Engagement', CH: 'Champion System' } as const
 const PHASE_NAMES = { defenders: 'Defensores', attackers: 'Atacantes', refusals: 'Rechazos' } as const
 
-const nm = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
-/** "Nombre (Army)" for the dropdowns; the army is left out when it has not been set. */
-const nmArmy = (p: Player, i: number, prefix: string) => {
-  const army = factionName(p.factionId)
-  return army ? `${nm(p, i, prefix)} (${army})` : nm(p, i, prefix)
-}
 const same = (a: number | [number, number], b: number | [number, number]) =>
   Array.isArray(a) && Array.isArray(b) ? a[0] === b[0] && a[1] === b[1] : a === b
 
 export function RoundAssistant({ round, mine, filled, ratings, state, onPush, onUndo, onReset }: Props) {
   const theirs = round.opponents
-  const mineName = (i: number) => nm(mine[i], i, 'Jugador')
-  const theirName = (j: number) => nm(theirs[j], j, 'Rival')
-  const mineOption = (i: number) => nmArmy(mine[i], i, 'Jugador')
-  const theirOption = (j: number) => nmArmy(theirs[j], j, 'Rival')
+  const mineName = (i: number) => myLabel(mine[i], i)
+  const theirName = (j: number) => rivalLabel(theirs[j], j)
+  const mineOption = (i: number) => myLabelWithArmy(mine[i], i)
+  const theirOption = (j: number) => rivalLabel(theirs[j], j)
   const n = mine.length
 
   if (!filled) {

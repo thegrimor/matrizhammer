@@ -96,8 +96,11 @@ from `lg`; each panel is rendered once and shown/hidden with CSS).
   full name). Checked at 360 px with 8 players.
 - Tailwind only sees full literal class strings — colour lookups (`RATING_CLASSES`, `DISPOSITIONS`)
   are written out literally on purpose.
-- The UI shows the army next to the player name in the assistant (`Nombre (Army)`), in the
-  dropdowns and in the recommended/predicted boxes.
+- Labels live in `core/utils/labels.ts`. **My players: name first** (`Nombre (Army)` in the assistant's
+  dropdowns and boxes). **Rivals: army first** (`Necrons (Bruno)`; matrix headers use the short army name,
+  e.g. `CSM`, from `FACTIONS[].short`), because the army tells you far more about a rival than a name.
+  Pre-filled names (`Rival 3`, `Jugador 3`) count as placeholders and are hidden next to an army. The
+  rivals editor puts the army field before the name.
 - Solver tests include a zero-sum consistency check (my value + the opponent-view value = 8n, also with
   three different matrices), a per-layer check (7/1/4 flat sets → known totals), an
   independent brute force for n=3, and optimality certificates for random games. Keep them green

@@ -72,6 +72,7 @@ export function RoundPage() {
               index={j}
               player={p}
               placeholder={`Rival ${j + 1}`}
+              armyFirst
               onChange={(patch) => dispatch(setOpponentPlayer({ ...ref, index: j, patch }))}
             />
           ))}

@@ -2,6 +2,7 @@ import type { Player, Rating, Round } from '@/types'
 import type { Match, Progress, StepAnalysis } from '@/core/solver/roundFlow'
 import { RATING_CLASSES } from '@/core/constants/ratings'
 import { dispositionById } from '@/core/constants/dispositions'
+import { myLabel, rivalLabel, rivalShort } from '@/core/utils/labels'
 
 interface Props {
   round: Round
@@ -22,7 +23,6 @@ function statuses(n: number, pool: number, defender: number | undefined, attacke
   })
 }
 
-const label = (p: Player, i: number, prefix: string) => p.name.trim() || `${prefix} ${i + 1}`
 const asList = (v: number | [number, number]) => (Array.isArray(v) ? v : [v])
 
 const BADGE: Record<Status, string> = {
@@ -33,14 +33,14 @@ const BADGE: Record<Status, string> = {
   out: '–',
 }
 
-function Header({ p, i, prefix, status, ring }: { p: Player; i: number; prefix: string; status: Status; ring: string }) {
+function Header({ p, i, rival, status, ring }: { p: Player; i: number; rival?: boolean; status: Status; ring: string }) {
   const disp = dispositionById(p.dispositionId)
   const dim = status === 'played' || status === 'out'
   return (
     <span className={`flex items-center gap-1 min-w-0 px-0.5 ${dim ? 'opacity-40 line-through' : ''} ${ring}`}>
       {disp && <span className={`w-1 h-3 shrink-0 ${disp.bar}`} aria-hidden />}
       <span className="shrink-0 text-parchment-dim/70">{i + 1}</span>
-      <span className="truncate">{label(p, i, prefix)}</span>
+      <span className="truncate">{rival ? rivalShort(p, i) : myLabel(p, i)}</span>
       {BADGE[status] && (
         <span className={`shrink-0 text-[9px] no-underline ${status === 'defender' ? 'text-crimson-bright' : status === 'attacker' ? 'text-gold-bright' : 'text-parchment-dim'}`}>
           {BADGE[status]}
@@ -91,8 +91,8 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
             <tr>
               <th className="w-[4.5rem] sm:w-24" />
               {theirs.map((p, j) => (
-                <th key={j} title={label(p, j, 'Rival')} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
-                  <Header p={p} i={j} prefix="Rival" status={theirStatus[j]} ring={predCols.has(j) ? 'outline outline-1 outline-gold-bright text-gold-bright' : ''} />
+                <th key={j} title={rivalLabel(p, j)} className="overflow-hidden font-normal text-parchment-dim text-left align-bottom pb-0.5">
+                  <Header p={p} i={j} rival status={theirStatus[j]} ring={predCols.has(j) ? 'outline outline-1 outline-gold-bright text-gold-bright' : ''} />
                 </th>
               ))}
             </tr>
@@ -100,8 +100,8 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
           <tbody>
             {mine.map((p, i) => (
               <tr key={i}>
-                <th title={label(p, i, 'Jugador')} className="overflow-hidden font-normal text-left text-parchment pr-1">
-                  <Header p={p} i={i} prefix="Jugador" status={myStatus[i]} ring={recRows.has(i) ? 'outline outline-1 outline-neon text-neon' : ''} />
+                <th title={myLabel(p, i)} className="overflow-hidden font-normal text-left text-parchment pr-1">
+                  <Header p={p} i={i} status={myStatus[i]} ring={recRows.has(i) ? 'outline outline-1 outline-neon text-neon' : ''} />
                 </th>
                 {theirs.map((_, j) => {
                   const v: Rating = round.matrix[i][j]
@@ -118,7 +118,7 @@ export function AssistantMatrix({ round, mine, progress, current }: Props) {
                         } ${live || game ? '' : 'opacity-25 saturate-0'} ${
                           game ? 'outline outline-2 outline-crimson-bright -outline-offset-2' : ''
                         } ${recCells.has(key) ? 'ring-2 ring-neon' : ''} ${predCells.has(key) ? 'ring-2 ring-gold-bright' : ''}`}
-                        title={`${label(mine[i], i, 'Jugador')} vs ${label(theirs[j], j, 'Rival')}${y !== null ? ` · Y${y}` : ''}${r !== null ? ` · R${r}` : ''}`}
+                        title={`${myLabel(mine[i], i)} vs ${rivalLabel(theirs[j], j)}${y !== null ? ` · Y${y}` : ''}${r !== null ? ` · R${r}` : ''}`}
                       >
                         {v ?? '·'}
                         {(y !== null || r !== null) && (
