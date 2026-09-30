@@ -111,8 +111,8 @@ from `lg`; each panel is rendered once and shown/hidden with CSS).
   about a rival than a name. Rival **column headers are written vertically** (`VerticalHeader`, rotated
   text above each narrow column) so the full army name fits and nothing scrolls sideways; my players'
   row headers are horizontal. Pre-filled names (`Rival 3`, `Jugador 3`) count as placeholders and are
-  hidden next to an army. The rivals editor puts the army field before the name and is open by default
-  while any rival has no army (until armies are set the headers can only show `Rival N`).
+  hidden next to an army. The rivals editor puts the army field before the name and is always open by default
+  (until armies are set the headers can only show `Rival N`).
 - Solver tests include a zero-sum consistency check (my value + the opponent-view value = 8n, also with
   three different matrices), a per-layer check (7/1/4 flat sets → known totals), an
   independent brute force for n=3, and optimality certificates for random games. Keep them green

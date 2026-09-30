@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { popStep, pushStep, resetSteps, setMyPlayer, setOpponentName, setOpponentPlayer, setRating, setResult } from '@/store/eventsSlice'
+import { popStep, pushStep, resetSteps, setOpponentName, setOpponentPlayer, setRating, setResult } from '@/store/eventsSlice'
 import { eventPath } from '@/core/constants/routes'
 import { replaySteps } from '@/core/solver/roundFlow'
 import { ratingSets } from '@/core/utils/ratings'
@@ -20,7 +20,7 @@ export function RoundPage() {
   const event = useAppSelector((s) => s.events.events.find((e) => e.id === eventId))
   const round = event?.rounds.find((r) => r.id === roundId)
   const [tab, setTab] = useState<Tab>('matrix')
-  // null = follow the default (open while any rival has no army yet); a click overrides it.
+  // Open by default so the rivals can always be edited; a click toggles it.
   const [opponentsOpen, setOpponentsOpen] = useState<boolean | null>(null)
 
   const numeric = useMemo(() => (round ? ratingSets(round) : null), [round])
@@ -44,7 +44,7 @@ export function RoundPage() {
   }
   const ref = { eventId, roundId }
   const missingArmies = round.opponents.filter((p) => !p.factionId).length
-  const showOpponents = opponentsOpen ?? missingArmies > 0
+  const showOpponents = opponentsOpen ?? true
   const highlight = new Set(progress.matches.map((m) => `${m.mine}-${m.theirs}`))
   const TABS: [Tab, string][] = [['matrix', 'Matriz'], ['assistant', 'Asistente'], ['results', 'Resultado']]
 
@@ -66,21 +66,10 @@ export function RoundPage() {
         aria-expanded={showOpponents}
         className="mt-4 w-full border border-rim-bright bg-surface-2 px-3 py-2 text-left font-display text-[11px] uppercase tracking-widest text-gold-bright hover:border-gold-bright"
       >
-        {showOpponents ? '▾' : '▸'} Editar jugadores{missingArmies > 0 ? ` · faltan ${missingArmies} armies rivales` : ''}
+        {showOpponents ? '▾' : '▸'} Jugadores rivales{missingArmies > 0 ? ` · faltan ${missingArmies} armies` : ''}
       </button>
       {showOpponents && (
         <div className="mt-2 space-y-1.5">
-          <div className="font-display text-[10px] uppercase tracking-widest text-parchment-dim">Mi equipo</div>
-          {event.myTeam.map((p, i) => (
-            <PlayerRow
-              key={`m${i}`}
-              index={i}
-              player={p}
-              placeholder={`Jugador ${i + 1}`}
-              onChange={(patch) => dispatch(setMyPlayer({ eventId, index: i, patch }))}
-            />
-          ))}
-          <div className="pt-2 font-display text-[10px] uppercase tracking-widest text-parchment-dim">Rivales</div>
           {round.opponents.map((p, j) => (
             <PlayerRow
               key={j}
