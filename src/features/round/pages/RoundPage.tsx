@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { popStep, pushStep, resetSteps, setOpponentName, setOpponentPlayer, setRating, setResult } from '@/store/eventsSlice'
+import { popStep, pushStep, resetSteps, setMyPlayer, setOpponentName, setOpponentPlayer, setRating, setResult } from '@/store/eventsSlice'
 import { eventPath } from '@/core/constants/routes'
 import { replaySteps } from '@/core/solver/roundFlow'
 import { ratingSets } from '@/core/utils/ratings'
@@ -63,12 +63,24 @@ export function RoundPage() {
       <button
         type="button"
         onClick={() => setOpponentsOpen(!showOpponents)}
-        className="mt-4 font-display text-[10px] uppercase tracking-widest text-gold-bright hover:underline"
+        aria-expanded={showOpponents}
+        className="mt-4 w-full border border-rim-bright bg-surface-2 px-3 py-2 text-left font-display text-[11px] uppercase tracking-widest text-gold-bright hover:border-gold-bright"
       >
-        {showOpponents ? '▾' : '▸'} Jugadores rivales{missingArmies > 0 ? ` · faltan ${missingArmies} armies` : ''}
+        {showOpponents ? '▾' : '▸'} Editar jugadores{missingArmies > 0 ? ` · faltan ${missingArmies} armies rivales` : ''}
       </button>
       {showOpponents && (
         <div className="mt-2 space-y-1.5">
+          <div className="font-display text-[10px] uppercase tracking-widest text-parchment-dim">Mi equipo</div>
+          {event.myTeam.map((p, i) => (
+            <PlayerRow
+              key={`m${i}`}
+              index={i}
+              player={p}
+              placeholder={`Jugador ${i + 1}`}
+              onChange={(patch) => dispatch(setMyPlayer({ eventId, index: i, patch }))}
+            />
+          ))}
+          <div className="pt-2 font-display text-[10px] uppercase tracking-widest text-parchment-dim">Rivales</div>
           {round.opponents.map((p, j) => (
             <PlayerRow
               key={j}
